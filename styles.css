@@ -1,3 +1,51 @@
-body{
+body {
     text-align: center;
+    font-family: Arial;
+    background: #222;
+    color: white;
+}
+
+.game {
+    width: 300px;
+    height: 500px;
+    background: #444;
+    margin: auto;
+    position: relative;
+    overflow: hidden;
+    border: 3px solid white;
+}
+
+.road {
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        #555,
+        #555 20px,
+        #666 20px,
+        #666 40px
+    );
+    animation: moveRoad 0.5s linear infinite;
+}
+
+@keyframes moveRoad {
+    from { background-position-y: 0; }
+    to { background-position-y: 40px; }
+}
+
+.bike {
+    width: 40px;
+    height: 60px;
+    background: red;
+    position: absolute;
+    bottom: 20px;
+    left: 130px;
+}
+
+.obstacle {
+    width: 40px;
+    height: 60px;
+    background: yellow;
+    position: absolute;
+    top: -60px;
+    left: 130px;
 }
