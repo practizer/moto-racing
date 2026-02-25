@@ -6,7 +6,8 @@
 </head>
 <body>
 
-    <h1>🏍 Simple Moto Racing</h1>
+    <h1>🏍 Moto Racing</h1>
+    <h2>Score: <span id="score">0</span></h2>
     <button onclick="startGame()">Start Race</button>
 
     <div class="game" id="game">
@@ -14,6 +15,11 @@
         <div class="bike" id="bike"></div>
         <div class="obstacle" id="obstacle"></div>
     </div>
+
+    <h2 id="gameOver" style="display:none;">
+        Game Over 😢
+        <button onclick="restartGame()">Restart</button>
+    </h2>
 
 <script src="script.js"></script>
 </body>

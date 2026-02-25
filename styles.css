@@ -39,6 +39,7 @@ body {
     position: absolute;
     bottom: 20px;
     left: 130px;
+    border-radius: 5px;
 }
 
 .obstacle {
@@ -48,4 +49,12 @@ body {
     position: absolute;
     top: -60px;
     left: 130px;
+    border-radius: 5px;
+}
+
+button {
+    padding: 8px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 10px;
 }
