@@ -13,10 +13,11 @@
   <div class="bg-grid"></div>
   <div class="scanlines"></div>
   <div class="vignette"></div>
+  <canvas id="rainCanvas"></canvas>
 
-  <!-- Floating ambient orbs -->
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
 
   <div class="wrapper">
 
@@ -24,8 +25,9 @@
       <div class="logo-wrap">
         <span class="logo-icon">🏍</span>
         <h1 class="logo-text">MOTO<span>RUSH</span></h1>
+        <div class="logo-badge" id="logoBadge"></div>
       </div>
-      <p class="tagline">DODGE &middot; SURVIVE &middot; DOMINATE</p>
+      <p class="tagline">DODGE &middot; SURVIVE &middot; DOMINATE &middot; ASCEND</p>
     </header>
 
     <div class="hud">
@@ -45,15 +47,26 @@
         <span class="hud-label">Lives</span>
         <span class="hud-value" id="livesDisplay">❤️❤️❤️</span>
       </div>
+      <div class="hud-block hud-level">
+        <span class="hud-label">Zone</span>
+        <span class="hud-value" id="zoneDisplay">1</span>
+      </div>
     </div>
 
-    <!-- Combo streak bar -->
-    <div class="combo-bar-wrap" id="comboWrap">
-      <div class="combo-label">COMBO</div>
-      <div class="combo-track">
-        <div class="combo-fill" id="comboFill"></div>
+    <div class="hud-row2">
+      <div class="combo-bar-wrap" id="comboWrap">
+        <div class="combo-label">COMBO</div>
+        <div class="combo-track">
+          <div class="combo-fill" id="comboFill"></div>
+        </div>
+        <div class="combo-count" id="comboCount">x0</div>
       </div>
-      <div class="combo-count" id="comboCount">x0</div>
+      <div class="fever-wrap hidden" id="feverWrap">
+        <span class="fever-text">🔥 FEVER</span>
+        <div class="fever-track">
+          <div class="fever-fill" id="feverFill"></div>
+        </div>
+      </div>
     </div>
 
     <div class="arena">
@@ -69,12 +82,13 @@
             <div class="curb curb-right"></div>
           </div>
 
-          <!-- Road distance markers -->
           <div id="markerLayer"></div>
           <div id="obstaclesLayer"></div>
           <div id="powerupLayer"></div>
+          <div id="coinLayer"></div>
           <div id="particleLayer"></div>
           <div id="floatingTextLayer"></div>
+          <div id="trailLayer"></div>
 
           <div class="bike" id="bike">
             <div class="bike-exhaust" id="bikeExhaust"></div>
@@ -99,20 +113,28 @@
             </svg>
           </div>
 
-          <!-- Shield overlay on bike -->
           <div class="shield-bubble hidden" id="shieldBubble"></div>
+          <div class="magnet-field hidden" id="magnetField"></div>
 
           <div class="screen" id="startScreen">
             <div class="screen-inner">
               <div class="start-logo">
                 <span class="start-icon">🏍</span>
                 <p class="screen-title">MOTO<span>RUSH</span></p>
+                <div class="version-tag">v2.0</div>
               </div>
               <p class="screen-sub">Three lanes. One winner. No mercy.</p>
               <div class="feature-pills">
                 <span class="pill">❤️ 3 Lives</span>
                 <span class="pill">⚡ Combos</span>
                 <span class="pill">🛡️ Power-ups</span>
+                <span class="pill">🔥 Fever Mode</span>
+                <span class="pill">🪙 Coins</span>
+                <span class="pill">🌊 Zones</span>
+              </div>
+              <div class="highscore-display" id="startBest">
+                <span class="hs-label">BEST</span>
+                <span class="hs-val" id="startBestVal">0</span>
               </div>
               <button class="btn-start" onclick="startGame()">START RACE</button>
               <div class="controls-hint">
@@ -120,7 +142,7 @@
                   <div class="key">◀</div>
                   <div class="key">▶</div>
                 </div>
-                <span>or swipe on mobile</span>
+                <span>or swipe · or tap buttons below</span>
               </div>
             </div>
           </div>
@@ -138,6 +160,11 @@
                 </div>
                 <div class="go-divider"></div>
                 <div class="go-stat">
+                  <span>Coins</span>
+                  <strong id="goCoins" class="gold">0</strong>
+                </div>
+                <div class="go-divider"></div>
+                <div class="go-stat">
                   <span>Best Combo</span>
                   <strong id="goCombo" class="cyan">0x</strong>
                 </div>
@@ -147,21 +174,30 @@
                   <strong id="goBest" class="gold">0</strong>
                 </div>
               </div>
+              <div class="zone-reached">
+                <span>Zone Reached: </span><strong id="goZone">1</strong>
+              </div>
               <p class="new-best hidden" id="newBestMsg">🏆 New Record!</p>
               <button class="btn-start" onclick="restartGame()">TRY AGAIN</button>
             </div>
           </div>
+
+          <div class="zone-announce hidden" id="zoneAnnounce"></div>
 
         </div>
       </div>
 
       <div class="mobile-controls">
         <button class="tap-btn" id="tapLeft"  ontouchstart="tapLane(-1)" onmousedown="tapLane(-1)">◀</button>
+        <div class="coin-counter">
+          <span>🪙</span>
+          <span id="coinCount">0</span>
+        </div>
         <button class="tap-btn" id="tapRight" ontouchstart="tapLane(1)"  onmousedown="tapLane(1)">▶</button>
       </div>
     </div>
 
-    <footer class="site-footer">Every 5 dodges — speed &amp; chaos increase &nbsp;|&nbsp; 🛡️ shield &nbsp;⚡ speed boost &nbsp;💜 extra life</footer>
+    <footer class="site-footer">Every 5 dodges — speed increases &nbsp;|&nbsp; 🛡️ shield &nbsp;⚡ boost &nbsp;💜 life &nbsp;🧲 magnet &nbsp;💣 nuke &nbsp;🪙 coins</footer>
 
   </div>
 
