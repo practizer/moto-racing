@@ -1,26 +1,135 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Simple Moto Racing</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MOTO RUSH</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
 
-    <h1>🏍 Moto Racing</h1>
-    <h2>Score: <span id="score">0</span></h2>
-    <button onclick="startGame()">Start Race</button>
+  <div class="bg-grid"></div>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
 
-    <div class="game" id="game">
-        <div class="road"></div>
-        <div class="bike" id="bike"></div>
-        <div class="obstacle" id="obstacle"></div>
+  <div class="wrapper">
+
+    <header class="site-header">
+      <div class="logo-wrap">
+        <span class="logo-icon">🏍</span>
+        <h1 class="logo-text">MOTO<span>RUSH</span></h1>
+      </div>
+      <p class="tagline">DODGE &middot; SURVIVE &middot; DOMINATE</p>
+    </header>
+
+    <div class="hud">
+      <div class="hud-block">
+        <span class="hud-label">Score</span>
+        <span class="hud-value" id="score">0</span>
+      </div>
+      <div class="hud-block hud-center">
+        <span class="hud-label">Best</span>
+        <span class="hud-value" id="best">0</span>
+      </div>
+      <div class="hud-block hud-speed">
+        <span class="hud-label">Speed</span>
+        <span class="hud-value" id="speedDisplay">1.0x</span>
+      </div>
     </div>
 
-    <h2 id="gameOver" style="display:none;">
-        Game Over 😢
-        <button onclick="restartGame()">Restart</button>
-    </h2>
+    <div class="arena">
+      <div class="game-shell">
+        <div class="game-border-glow"></div>
+        <div id="game">
 
-<script src="script.js"></script>
+          <div class="road-bg" id="roadBg"></div>
+          <div class="road-surface" id="roadSurface">
+            <div class="lane-line lane-left"></div>
+            <div class="lane-line lane-right"></div>
+            <div class="curb curb-left"></div>
+            <div class="curb curb-right"></div>
+          </div>
+
+          <div id="obstaclesLayer"></div>
+          <div id="particleLayer"></div>
+
+          <div class="bike" id="bike">
+            <div class="bike-exhaust" id="bikeExhaust"></div>
+            <svg viewBox="0 0 40 72" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="20" cy="62" rx="11" ry="7" fill="#1a1a1a"/>
+              <ellipse cx="20" cy="62" rx="7" ry="4.5" fill="#2d2d2d"/>
+              <ellipse cx="20" cy="62" rx="3.5" ry="2" fill="#555"/>
+              <ellipse cx="20" cy="11" rx="9" ry="6.5" fill="#1a1a1a"/>
+              <ellipse cx="20" cy="11" rx="6" ry="4" fill="#2d2d2d"/>
+              <ellipse cx="20" cy="11" rx="3" ry="2" fill="#555"/>
+              <rect x="15" y="30" width="10" height="22" rx="2" fill="#cc3300"/>
+              <rect x="14" y="29" width="12" height="4" rx="1" fill="#ff5500"/>
+              <polygon points="20,3 11,20 29,20" fill="#ff4400"/>
+              <polygon points="20,7 14,20 26,20" fill="#00e5ff" opacity="0.55"/>
+              <rect x="16" y="36" width="8" height="12" rx="1" fill="#aa2200"/>
+              <rect x="17" y="38" width="6" height="3" rx="1" fill="#ff6600" opacity="0.6"/>
+              <rect x="9"  y="32" width="5" height="8" rx="2" fill="#cc3300" opacity="0.7"/>
+              <rect x="26" y="32" width="5" height="8" rx="2" fill="#cc3300" opacity="0.7"/>
+              <rect x="10" y="34" width="3" height="4" rx="1" fill="#ff4400" opacity="0.5"/>
+              <rect x="27" y="34" width="3" height="4" rx="1" fill="#ff4400" opacity="0.5"/>
+            </svg>
+          </div>
+
+          <div class="screen" id="startScreen">
+            <div class="screen-inner">
+              <div class="start-logo">
+                <span class="start-icon">🏍</span>
+                <p class="screen-title">MOTO<span>RUSH</span></p>
+              </div>
+              <p class="screen-sub">Three lanes. One winner. No mercy.</p>
+              <button class="btn-start" onclick="startGame()">START RACE</button>
+              <div class="controls-hint">
+                <div class="key-group">
+                  <div class="key">◀</div>
+                  <div class="key">▶</div>
+                </div>
+                <span>or swipe on mobile</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen hidden" id="gameOverScreen">
+            <div class="screen-inner go-inner">
+              <div class="crash-wrap">
+                <span class="crash-icon">💥</span>
+                <p class="screen-title go-title">WIPEOUT</p>
+              </div>
+              <div class="go-stats">
+                <div class="go-stat">
+                  <span>Score</span>
+                  <strong id="goScore">0</strong>
+                </div>
+                <div class="go-divider"></div>
+                <div class="go-stat">
+                  <span>Best</span>
+                  <strong id="goBest" class="gold">0</strong>
+                </div>
+              </div>
+              <p class="new-best hidden" id="newBestMsg">🏆 New Record!</p>
+              <button class="btn-start" onclick="restartGame()">TRY AGAIN</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="mobile-controls">
+        <button class="tap-btn" id="tapLeft"  ontouchstart="tapLane(-1)" onmousedown="tapLane(-1)">◀</button>
+        <button class="tap-btn" id="tapRight" ontouchstart="tapLane(1)"  onmousedown="tapLane(1)">▶</button>
+      </div>
+    </div>
+
+    <footer class="site-footer">Every 5 dodges — speed &amp; chaos increase</footer>
+
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
