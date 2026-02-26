@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MOTO RUSH</title>
+  <title>MOTO RUSH — STREET LEGEND</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
 
+  <!-- Ambient background layers -->
+  <div class="bg-noise"></div>
   <div class="bg-grid"></div>
-  <div class="scanlines"></div>
-  <div class="vignette"></div>
   <canvas id="rainCanvas"></canvas>
 
   <div class="orb orb-1"></div>
@@ -21,59 +21,85 @@
 
   <div class="wrapper">
 
+    <!-- HEADER -->
     <header class="site-header">
       <div class="logo-wrap">
-        <span class="logo-icon">🏍</span>
-        <h1 class="logo-text">MOTO<span>RUSH</span></h1>
-        <div class="logo-badge" id="logoBadge"></div>
+        <div class="logo-emblem">
+          <span class="logo-icon">🏍</span>
+          <div class="logo-scan"></div>
+        </div>
+        <div class="logo-text-wrap">
+          <h1 class="logo-text">MOTO<span>RUSH</span></h1>
+          <div class="logo-sub">STREET LEGEND</div>
+        </div>
+        <div class="logo-badge">v3.0</div>
       </div>
-      <p class="tagline">DODGE &middot; SURVIVE &middot; DOMINATE &middot; ASCEND</p>
     </header>
 
+    <!-- HUD STATS -->
     <div class="hud">
-      <div class="hud-block">
-        <span class="hud-label">Score</span>
+      <div class="hud-block hud-score">
+        <span class="hud-label">SCORE</span>
         <span class="hud-value" id="score">0</span>
+        <div class="hud-line"></div>
       </div>
-      <div class="hud-block hud-center">
-        <span class="hud-label">Best</span>
+      <div class="hud-block hud-best">
+        <span class="hud-label">BEST</span>
         <span class="hud-value" id="best">0</span>
+        <div class="hud-line"></div>
       </div>
       <div class="hud-block hud-speed">
-        <span class="hud-label">Speed</span>
+        <span class="hud-label">SPEED</span>
         <span class="hud-value" id="speedDisplay">1.0x</span>
+        <div class="hud-line"></div>
       </div>
       <div class="hud-block hud-lives">
-        <span class="hud-label">Lives</span>
+        <span class="hud-label">LIVES</span>
         <span class="hud-value" id="livesDisplay">❤️❤️❤️</span>
+        <div class="hud-line"></div>
       </div>
-      <div class="hud-block hud-level">
-        <span class="hud-label">Zone</span>
+      <div class="hud-block hud-zone">
+        <span class="hud-label">ZONE</span>
         <span class="hud-value" id="zoneDisplay">1</span>
+        <div class="hud-line"></div>
       </div>
     </div>
 
-    <div class="hud-row2">
+    <!-- BARS ROW -->
+    <div class="bars-row">
       <div class="combo-bar-wrap" id="comboWrap">
-        <div class="combo-label">COMBO</div>
-        <div class="combo-track">
-          <div class="combo-fill" id="comboFill"></div>
+        <span class="bar-tag">COMBO</span>
+        <div class="bar-track">
+          <div class="bar-fill combo-fill" id="comboFill"></div>
+          <div class="bar-glow combo-glow"></div>
         </div>
-        <div class="combo-count" id="comboCount">x0</div>
+        <span class="combo-count" id="comboCount">x0</span>
       </div>
       <div class="fever-wrap hidden" id="feverWrap">
-        <span class="fever-text">🔥 FEVER</span>
-        <div class="fever-track">
-          <div class="fever-fill" id="feverFill"></div>
+        <span class="bar-tag fever-tag">🔥FEVER</span>
+        <div class="bar-track fever-track">
+          <div class="bar-fill fever-fill" id="feverFill"></div>
+          <div class="bar-glow fever-glow"></div>
         </div>
+      </div>
+      <div class="coin-pill">
+        <span>🪙</span>
+        <span id="coinCount">0</span>
       </div>
     </div>
 
+    <!-- GAME ARENA -->
     <div class="arena">
       <div class="game-shell">
-        <div class="game-border-glow"></div>
-        <div id="game">
+        <div class="game-border-top"></div>
+        <div class="game-border-bot"></div>
+        <div class="game-corner tl"></div>
+        <div class="game-corner tr"></div>
+        <div class="game-corner bl"></div>
+        <div class="game-corner br"></div>
 
+        <div id="game">
+          <!-- Road -->
           <div class="road-bg" id="roadBg"></div>
           <div class="road-surface" id="roadSurface">
             <div class="lane-line lane-left"></div>
@@ -82,6 +108,7 @@
             <div class="curb curb-right"></div>
           </div>
 
+          <!-- Game layers -->
           <div id="markerLayer"></div>
           <div id="obstaclesLayer"></div>
           <div id="powerupLayer"></div>
@@ -90,6 +117,7 @@
           <div id="floatingTextLayer"></div>
           <div id="trailLayer"></div>
 
+          <!-- Bike -->
           <div class="bike" id="bike">
             <div class="bike-exhaust" id="bikeExhaust"></div>
             <div class="headlight" id="headlight"></div>
@@ -116,90 +144,133 @@
           <div class="shield-bubble hidden" id="shieldBubble"></div>
           <div class="magnet-field hidden" id="magnetField"></div>
 
+          <!-- START SCREEN -->
           <div class="screen" id="startScreen">
             <div class="screen-inner">
-              <div class="start-logo">
-                <span class="start-icon">🏍</span>
-                <p class="screen-title">MOTO<span>RUSH</span></p>
-                <div class="version-tag">v2.0</div>
+              <div class="screen-logo">
+                <div class="screen-icon-wrap">
+                  <span class="screen-icon">🏍</span>
+                  <div class="screen-icon-ring"></div>
+                  <div class="screen-icon-ring ring2"></div>
+                </div>
+                <div class="screen-title-wrap">
+                  <p class="screen-title">MOTO<em>RUSH</em></p>
+                  <div class="screen-edition">STREET LEGEND EDITION</div>
+                </div>
               </div>
-              <p class="screen-sub">Three lanes. One winner. No mercy.</p>
-              <div class="feature-pills">
-                <span class="pill">❤️ 3 Lives</span>
-                <span class="pill">⚡ Combos</span>
-                <span class="pill">🛡️ Power-ups</span>
-                <span class="pill">🔥 Fever Mode</span>
-                <span class="pill">🪙 Coins</span>
-                <span class="pill">🌊 Zones</span>
+
+              <div class="feature-grid">
+                <div class="feat-item"><span class="feat-icon">❤️</span><span>3 Lives</span></div>
+                <div class="feat-item"><span class="feat-icon">⚡</span><span>Combos</span></div>
+                <div class="feat-item"><span class="feat-icon">🛡️</span><span>Shield</span></div>
+                <div class="feat-item"><span class="feat-icon">🔥</span><span>Fever</span></div>
+                <div class="feat-item"><span class="feat-icon">🪙</span><span>Coins</span></div>
+                <div class="feat-item"><span class="feat-icon">🌊</span><span>6 Zones</span></div>
               </div>
-              <div class="highscore-display" id="startBest">
-                <span class="hs-label">BEST</span>
+
+              <div class="hs-box">
+                <span class="hs-label">BEST SCORE</span>
                 <span class="hs-val" id="startBestVal">0</span>
               </div>
-              <button class="btn-start" onclick="startGame()">START RACE</button>
+
+              <button class="btn-start" onclick="startGame()">
+                <span class="btn-text">START RACE</span>
+                <span class="btn-arrow">▶</span>
+                <div class="btn-shine"></div>
+              </button>
+
               <div class="controls-hint">
-                <div class="key-group">
-                  <div class="key">◀</div>
-                  <div class="key">▶</div>
+                <div class="key-row">
+                  <kbd>◀</kbd>
+                  <kbd>▶</kbd>
+                  <span class="or-text">or</span>
+                  <span class="hint-swipe">SWIPE</span>
+                  <span class="or-text">or</span>
+                  <span class="hint-tap">TAP BUTTONS</span>
                 </div>
-                <span>or swipe · or tap buttons below</span>
               </div>
             </div>
           </div>
 
+          <!-- GAME OVER SCREEN -->
           <div class="screen hidden" id="gameOverScreen">
             <div class="screen-inner go-inner">
-              <div class="crash-wrap">
-                <span class="crash-icon">💥</span>
+              <div class="crash-header">
+                <div class="crash-icon-wrap">
+                  <span class="crash-icon">💥</span>
+                </div>
                 <p class="screen-title go-title">WIPEOUT</p>
+                <div class="go-line"></div>
               </div>
+
               <div class="go-stats">
                 <div class="go-stat">
-                  <span>Score</span>
-                  <strong id="goScore">0</strong>
+                  <span class="go-label">SCORE</span>
+                  <strong id="goScore" class="go-val">0</strong>
                 </div>
-                <div class="go-divider"></div>
+                <div class="go-div"></div>
                 <div class="go-stat">
-                  <span>Coins</span>
-                  <strong id="goCoins" class="gold">0</strong>
+                  <span class="go-label">COINS</span>
+                  <strong id="goCoins" class="go-val gold">0</strong>
                 </div>
-                <div class="go-divider"></div>
+                <div class="go-div"></div>
                 <div class="go-stat">
-                  <span>Best Combo</span>
-                  <strong id="goCombo" class="cyan">0x</strong>
+                  <span class="go-label">COMBO</span>
+                  <strong id="goCombo" class="go-val cyan">0x</strong>
                 </div>
-                <div class="go-divider"></div>
+                <div class="go-div"></div>
                 <div class="go-stat">
-                  <span>Best</span>
-                  <strong id="goBest" class="gold">0</strong>
+                  <span class="go-label">BEST</span>
+                  <strong id="goBest" class="go-val gold">0</strong>
                 </div>
               </div>
-              <div class="zone-reached">
-                <span>Zone Reached: </span><strong id="goZone">1</strong>
+
+              <div class="zone-tag">
+                ZONE REACHED &nbsp;<strong id="goZone">1</strong>
               </div>
-              <p class="new-best hidden" id="newBestMsg">🏆 New Record!</p>
-              <button class="btn-start" onclick="restartGame()">TRY AGAIN</button>
+
+              <p class="new-best hidden" id="newBestMsg">🏆 NEW RECORD!</p>
+
+              <button class="btn-start btn-retry" onclick="restartGame()">
+                <span class="btn-text">TRY AGAIN</span>
+                <span class="btn-arrow">↺</span>
+                <div class="btn-shine"></div>
+              </button>
             </div>
           </div>
 
+          <!-- ZONE ANNOUNCE -->
           <div class="zone-announce hidden" id="zoneAnnounce"></div>
 
-        </div>
-      </div>
+        </div><!-- /game -->
+      </div><!-- /game-shell -->
 
+      <!-- MOBILE CONTROLS -->
       <div class="mobile-controls">
-        <button class="tap-btn" id="tapLeft"  ontouchstart="tapLane(-1)" onmousedown="tapLane(-1)">◀</button>
-        <div class="coin-counter">
-          <span>🪙</span>
-          <span id="coinCount">0</span>
+        <button class="tap-btn tap-left" id="tapLeft" ontouchstart="tapLane(-1)" onmousedown="tapLane(-1)">
+          <span>◀</span>
+        </button>
+        <div class="mid-display">
+          <div class="mid-icon">🏍</div>
         </div>
-        <button class="tap-btn" id="tapRight" ontouchstart="tapLane(1)"  onmousedown="tapLane(1)">▶</button>
+        <button class="tap-btn tap-right" id="tapRight" ontouchstart="tapLane(1)" onmousedown="tapLane(1)">
+          <span>▶</span>
+        </button>
       </div>
-    </div>
 
-    <footer class="site-footer">Every 5 dodges — speed increases &nbsp;|&nbsp; 🛡️ shield &nbsp;⚡ boost &nbsp;💜 life &nbsp;🧲 magnet &nbsp;💣 nuke &nbsp;🪙 coins</footer>
+    </div><!-- /arena -->
 
-  </div>
+    <footer class="site-footer">
+      <span>DODGE +1</span>
+      <span class="sep">·</span>
+      <span>COMBO x5 = +2 BONUS</span>
+      <span class="sep">·</span>
+      <span>🛡️⚡💜🧲💣 POWER-UPS</span>
+      <span class="sep">·</span>
+      <span>EVERY 5 DODGES = SPEED UP</span>
+    </footer>
+
+  </div><!-- /wrapper -->
 
   <script src="script.js"></script>
 </body>

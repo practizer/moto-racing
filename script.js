@@ -1,3 +1,9 @@
+// ─────────────────────────────────────────────
+//  MOTO RUSH — STREET LEGEND
+//  Game Logic v3.0
+// ─────────────────────────────────────────────
+
+// ─── DOM REFS ───
 const bikeEl            = document.getElementById('bike');
 const scoreEl           = document.getElementById('score');
 const bestEl            = document.getElementById('best');
@@ -34,38 +40,42 @@ const zoneAnnounce      = document.getElementById('zoneAnnounce');
 const startBestVal      = document.getElementById('startBestVal');
 const rainCanvas        = document.getElementById('rainCanvas');
 
-const GAME_W      = 300;
-const GAME_H      = 510;
-const LANES       = [28, 130, 232];
-const BIKE_W      = 40;
-const BIKE_H      = 72;
-const OBS_W       = 40;
-const OBS_H       = 68;
-const BASE_SPD    = 4;
-const MAX_OBS     = 2;
-const MAX_LIVES   = 3;
-const COMBO_MAX   = 10;
-const INVULN_MS   = 1400;
-const FEVER_MAX   = 20;
-const FEVER_DRAIN = 0.015;
+// ─── CONSTANTS ───
+const GAME_W       = 300;
+const GAME_H       = 510;
+const LANES        = [28, 130, 232];
+const BIKE_W       = 40;
+const BIKE_H       = 72;
+const OBS_W        = 40;
+const OBS_H        = 68;
+const BASE_SPD     = 4;
+const MAX_OBS      = 2;
+const MAX_LIVES    = 3;
+const COMBO_MAX    = 10;
+const INVULN_MS    = 1400;
+const FEVER_MAX    = 20;
+const FEVER_DRAIN  = 0.015;
 
+// ─── ZONE THEMES ───
 const ZONE_THEMES = [
-  { name: 'CITY',     color: '#00e5ff', bg: '#0d0f16', road: '#111420' },
+  { name: 'CITY',     color: '#00e5ff', bg: '#0c0e14', road: '#0f111a' },
   { name: 'DESERT',   color: '#ffd700', bg: '#1a0e00', road: '#1e1200' },
   { name: 'STORM',    color: '#bf5fff', bg: '#0a0014', road: '#0e0018' },
-  { name: 'NEON',     color: '#ff69b4', bg: '#0a0010', road: '#120018' },
+  { name: 'NEON',     color: '#ff3399', bg: '#0a0010', road: '#120018' },
   { name: 'ARCTIC',   color: '#88ccff', bg: '#000a14', road: '#000e1a' },
   { name: 'VOLCANIC', color: '#ff4500', bg: '#140000', road: '#1a0000' },
 ];
 
+// ─── POWERUP TYPES ───
 const POWERUP_TYPES = [
-  { type: 'shield',  icon: '🛡️', chance: 0.28 },
-  { type: 'boost',   icon: '⚡', chance: 0.25 },
-  { type: 'life',    icon: '💜', chance: 0.20 },
-  { type: 'magnet',  icon: '🧲', chance: 0.15 },
-  { type: 'nuke',    icon: '💣', chance: 0.12 },
+  { type: 'shield', icon: '🛡️', chance: 0.28 },
+  { type: 'boost',  icon: '⚡',  chance: 0.25 },
+  { type: 'life',   icon: '💜', chance: 0.20 },
+  { type: 'magnet', icon: '🧲', chance: 0.15 },
+  { type: 'nuke',   icon: '💣', chance: 0.12 },
 ];
 
+// ─── OBS COLOR PALETTES ───
 const OBS_PALETTES = [
   { body: '#ff4444', tint: '#ff8888', dark: '#200000' },
   { body: '#ffd700', tint: '#ffe566', dark: '#201a00' },
@@ -77,6 +87,7 @@ const OBS_PALETTES = [
   { body: '#00ffcc', tint: '#88ffee', dark: '#001a12' },
 ];
 
+// ─── STATE ───
 let currentLane    = 1;
 let gameRunning    = false;
 let score          = 0;
@@ -114,23 +125,21 @@ let lastLane       = 1;
 let rainDrops      = [];
 let rainCtx        = null;
 let screenShakeActive = false;
+let trailTickCount = 0;
 
+// ─── RAIN ───
 function initRain() {
   rainCanvas.width  = window.innerWidth;
   rainCanvas.height = window.innerHeight;
-  rainCanvas.style.position = 'fixed';
-  rainCanvas.style.inset = '0';
-  rainCanvas.style.zIndex = '0';
-  rainCanvas.style.pointerEvents = 'none';
-  rainCanvas.style.opacity = '0';
+  rainCanvas.style.cssText = 'position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;';
   rainCtx = rainCanvas.getContext('2d');
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 130; i++) {
     rainDrops.push({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      len: 8 + Math.random() * 14,
+      x:   Math.random() * window.innerWidth,
+      y:   Math.random() * window.innerHeight,
+      len: 8  + Math.random() * 14,
       spd: 12 + Math.random() * 16,
-      op: 0.1 + Math.random() * 0.3,
+      op:  0.1 + Math.random() * 0.3,
     });
   }
 }
@@ -142,7 +151,7 @@ function drawRain(zoneIdx) {
   if (!stormZone) return;
   rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
   rainCtx.strokeStyle = '#88aaff';
-  rainCtx.lineWidth = 1;
+  rainCtx.lineWidth   = 1;
   for (const d of rainDrops) {
     rainCtx.globalAlpha = d.op;
     rainCtx.beginPath();
@@ -155,8 +164,9 @@ function drawRain(zoneIdx) {
   rainCtx.globalAlpha = 1;
 }
 
-function makeObstacleSVG(palette) {
-  const { body, tint, dark } = palette;
+// ─── OBSTACLE SVG ───
+function makeObstacleSVG(p) {
+  const { body, tint, dark } = p;
   return `<svg viewBox="0 0 40 68" xmlns="http://www.w3.org/2000/svg">
     <ellipse cx="12" cy="60" rx="8" ry="6" fill="#111"/>
     <ellipse cx="28" cy="60" rx="8" ry="6" fill="#111"/>
@@ -175,9 +185,10 @@ function makeObstacleSVG(palette) {
   </svg>`;
 }
 
+// ─── SPAWN ───
 function spawnObstacle() {
-  const occupiedLanes = obstacles.filter(o => o.top < 130).map(o => o.lane);
-  const free = [0, 1, 2].filter(l => !occupiedLanes.includes(l));
+  const occupied = obstacles.filter(o => o.top < 130).map(o => o.lane);
+  const free = [0, 1, 2].filter(l => !occupied.includes(l));
   if (!free.length) return;
 
   const lane    = free[Math.floor(Math.random() * free.length)];
@@ -190,7 +201,8 @@ function spawnObstacle() {
   el.style.top  = -OBS_H + 'px';
 
   if (zone >= 3) {
-    el.style.filter = `drop-shadow(0 0 8px ${ZONE_THEMES[zone - 1]?.color || '#fff'})`;
+    const zColor = ZONE_THEMES[zone - 1]?.color || '#fff';
+    el.style.filter = `drop-shadow(0 0 8px ${zColor})`;
   }
 
   obstaclesLayer.appendChild(el);
@@ -201,11 +213,10 @@ function spawnPowerup() {
   if (powerups.length > 0) return;
 
   const roll = Math.random();
-  let cumulative = 0;
-  let chosen = POWERUP_TYPES[0];
+  let cum = 0, chosen = POWERUP_TYPES[0];
   for (const p of POWERUP_TYPES) {
-    cumulative += p.chance;
-    if (roll < cumulative) { chosen = p; break; }
+    cum += p.chance;
+    if (roll < cum) { chosen = p; break; }
   }
 
   if (chosen.type === 'life' && lives >= MAX_LIVES) return;
@@ -234,7 +245,9 @@ function spawnCoin() {
 function spawnTrail() {
   const x = LANES[currentLane] + BIKE_W / 2;
   const y = GAME_H - 22;
-  const colors = feverActive ? ['#ff4500','#ff7700','#ffd700'] : ['rgba(0,229,255,0.4)','rgba(255,69,0,0.3)'];
+  const colors = feverActive
+    ? ['#ff4500', '#ff7700', '#ffd700']
+    : ['rgba(0,229,255,0.4)', 'rgba(255,69,0,0.3)'];
   for (let i = 0; i < 2; i++) {
     const t = document.createElement('div');
     t.className = 'trail-dot';
@@ -247,6 +260,7 @@ function spawnTrail() {
   }
 }
 
+// ─── UPDATE LOOPS ───
 function updateObstacles() {
   const moveSpd = feverActive ? speed * 1.5 : speed;
   for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -279,10 +293,7 @@ function updatePowerups() {
       powerups.splice(i, 1);
       continue;
     }
-
-    if (checkCollision(pu, 32, 32)) {
-      collectPowerup(pu, i);
-    }
+    if (checkCollision(pu, 32, 32)) collectPowerup(pu, i);
   }
 }
 
@@ -319,20 +330,19 @@ function updateCoins() {
     if (
       bikeLeft + pad < coinX + 24 - pad &&
       bikeLeft + BIKE_W - pad > coinX + pad &&
-      bikeTop + pad < c.top + 24 - pad &&
-      bikeTop + BIKE_H - pad > c.top + pad
-    ) {
-      collectCoin(c, i);
-    }
+      bikeTop  + pad < c.top + 24 - pad &&
+      bikeTop  + BIKE_H - pad > c.top + pad
+    ) collectCoin(c, i);
   }
 }
 
+// ─── COLLECT ───
 function collectCoin(c, idx) {
   c.el.remove();
   coins.splice(idx, 1);
   const bonus = feverActive ? 3 : 1;
   sessionCoins += bonus;
-  totalCoins += bonus;
+  totalCoins   += bonus;
   coinCountEl.textContent = sessionCoins;
   popEl(coinCountEl.parentElement);
   spawnFloatingText(c.lane, feverActive ? `🪙x${bonus} FEVER!` : '🪙+1', '#ffd700');
@@ -344,8 +354,8 @@ function spawnCoinBurst(x, y) {
     const p = document.createElement('div');
     p.className = 'particle';
     const angle = (i / 5) * Math.PI * 2;
-    p.style.left = x + 'px';
-    p.style.top  = y + 'px';
+    p.style.left       = x + 'px';
+    p.style.top        = y + 'px';
     p.style.background = '#ffd700';
     p.style.setProperty('--dx', Math.cos(angle) * 20 + 'px');
     p.style.setProperty('--dy', Math.sin(angle) * 20 + 'px');
@@ -355,22 +365,20 @@ function spawnCoinBurst(x, y) {
   }
 }
 
+// ─── FEVER ───
 function updateFever() {
   if (!feverActive) return;
   feverCombo -= FEVER_DRAIN;
   const pct = Math.max(0, (feverCombo / FEVER_MAX) * 100);
   feverFill.style.width = pct + '%';
-  if (feverCombo <= 0) {
-    feverCombo = 0;
-    deactivateFever();
-  }
+  if (feverCombo <= 0) { feverCombo = 0; deactivateFever(); }
 }
 
 function activateFever() {
   feverActive = true;
   feverWrap.classList.remove('hidden');
   gameEl.classList.add('fever-mode');
-  bikeEl.style.filter = 'drop-shadow(0 0 14px #ff4500) drop-shadow(0 0 30px #ffd700)';
+  bikeEl.style.filter = 'drop-shadow(0 0 16px #ff4500) drop-shadow(0 0 32px #ffd700)';
   spawnFloatingText(currentLane, '🔥 FEVER MODE!', '#ff4500');
 }
 
@@ -383,42 +391,37 @@ function deactivateFever() {
   updateComboBar();
 }
 
+// ─── COLLISION ───
 function checkCollision(obj, w, h) {
   const bikeLeft = LANES[currentLane];
   const bikeTop  = GAME_H - 22 - BIKE_H;
   const objLeft  = LANES[obj.lane] + (OBS_W - w) / 2;
   const pad = 8;
-
   return (
     bikeLeft + pad          < objLeft + w - pad &&
-    bikeLeft + BIKE_W - pad > objLeft + pad      &&
-    bikeTop  + pad          < obj.top + h - pad  &&
+    bikeLeft + BIKE_W - pad > objLeft + pad     &&
+    bikeTop  + pad          < obj.top + h - pad &&
     bikeTop  + BIKE_H - pad > obj.top + pad
   );
 }
 
+// ─── SCORING ───
 function addScore(obs) {
   score++;
   combo++;
   feverCombo = Math.min(feverCombo + 1, FEVER_MAX);
-
   if (combo > bestCombo) bestCombo = combo;
   scoreEl.textContent = score;
-
   popEl(scoreEl);
   spawnScoreRing(obs);
 
-  const pointsLabel = feverActive ? `+${score % 3 === 0 ? 3 : 2}` : '+1';
-  spawnFloatingText(obs.lane, pointsLabel, feverActive ? '#ffd700' : '#00e5ff');
+  const lbl = feverActive ? `+${score % 3 === 0 ? 3 : 2}` : '+1';
+  spawnFloatingText(obs.lane, lbl, feverActive ? '#ffd700' : '#00e5ff');
 
-  if (feverActive && score % 3 === 0) score += 2;
-  if (feverActive && score % 3 === 0) scoreEl.textContent = score;
-
+  if (feverActive && score % 3 === 0) { score += 2; scoreEl.textContent = score; }
   updateComboBar();
 
-  if (!feverActive && feverCombo >= FEVER_MAX) {
-    activateFever();
-  }
+  if (!feverActive && feverCombo >= FEVER_MAX) activateFever();
 
   if (combo > 0 && combo % 5 === 0) {
     score += 2;
@@ -443,27 +446,27 @@ function addScore(obs) {
   }
 }
 
+// ─── ZONE CHANGE ───
 function triggerZoneChange() {
   const theme = ZONE_THEMES[zone - 1] || ZONE_THEMES[0];
   zoneEl.textContent = zone;
   popEl(zoneEl);
 
-  gameEl.style.setProperty('--zone-color', theme.color);
+  document.documentElement.style.setProperty('--zone-accent', theme.color);
+  gameEl.style.setProperty('--zone-accent', theme.color);
 
   zoneAnnounce.textContent = `ZONE ${zone} — ${theme.name}`;
-  zoneAnnounce.style.color = theme.color;
-  zoneAnnounce.style.textShadow = `0 0 20px ${theme.color}`;
+  zoneAnnounce.style.color      = theme.color;
+  zoneAnnounce.style.textShadow = `0 0 22px ${theme.color}`;
   zoneAnnounce.classList.remove('hidden');
   zoneAnnounce.classList.add('zone-pop');
-
   setTimeout(() => {
     zoneAnnounce.classList.add('hidden');
     zoneAnnounce.classList.remove('zone-pop');
   }, 2200);
-
-  document.documentElement.style.setProperty('--zone-accent', theme.color);
 }
 
+// ─── COMBO BAR ───
 function updateComboBar() {
   const pct = Math.min((combo / COMBO_MAX) * 100, 100);
   comboFill.style.width = pct + '%';
@@ -482,37 +485,21 @@ function updateComboBar() {
 }
 
 function resetCombo() {
-  combo = 0;
-  feverCombo = 0;
+  combo = 0; feverCombo = 0;
   if (feverActive) deactivateFever();
   updateComboBar();
 }
 
+// ─── POWERUP COLLECTION ───
 function collectPowerup(pu, idx) {
   pu.el.remove();
   powerups.splice(idx, 1);
-
   switch (pu.type) {
-    case 'shield':
-      activateShield();
-      spawnFloatingText(pu.lane, '🛡️ SHIELD!', '#00e5ff');
-      break;
-    case 'boost':
-      activateBoost();
-      spawnFloatingText(pu.lane, '⚡ BOOST!', '#ffd700');
-      break;
-    case 'life':
-      gainLife();
-      spawnFloatingText(pu.lane, '💜 +1 LIFE', '#ff80aa');
-      break;
-    case 'magnet':
-      activateMagnet();
-      spawnFloatingText(pu.lane, '🧲 MAGNET!', '#bf5fff');
-      break;
-    case 'nuke':
-      activateNuke();
-      spawnFloatingText(pu.lane, '💣 NUKE!', '#ff4500');
-      break;
+    case 'shield': activateShield(); spawnFloatingText(pu.lane, '🛡️ SHIELD!', '#00e5ff'); break;
+    case 'boost':  activateBoost();  spawnFloatingText(pu.lane, '⚡ BOOST!',  '#ffd700'); break;
+    case 'life':   gainLife();       spawnFloatingText(pu.lane, '💜 +1 LIFE', '#ff80aa'); break;
+    case 'magnet': activateMagnet(); spawnFloatingText(pu.lane, '🧲 MAGNET!', '#bf5fff'); break;
+    case 'nuke':   activateNuke();   spawnFloatingText(pu.lane, '💣 NUKE!',   '#ff4500'); break;
   }
 }
 
@@ -545,38 +532,22 @@ function activateNuke() {
     o.el.remove();
   });
   obstacles = [];
-
   if (count > 0) {
     score += count;
     scoreEl.textContent = score;
     spawnFloatingText(currentLane, `💣 x${count} CLEARED! +${count}`, '#ff4500');
     popEl(scoreEl);
   }
-
   gameEl.classList.remove('nuke-flash');
   void gameEl.offsetWidth;
   gameEl.classList.add('nuke-flash');
   triggerScreenShake();
 }
 
-function syncShieldPosition() {
-  if (!shieldActive) return;
-  const bikeLeft = parseInt(bikeEl.style.left);
-  shieldBubble.style.left = (bikeLeft - 9) + 'px';
-}
-
-function syncMagnetPosition() {
-  if (!magnetActive) return;
-  const bikeLeft = parseInt(bikeEl.style.left);
-  magnetField.style.left = (bikeLeft - 20) + 'px';
-}
-
 function activateBoost() {
-  const prevSpeed = speed;
-  const prevInterval = spawnInterval;
+  const prevSpeed = speed, prevInterval = spawnInterval;
   speed = Math.max(speed * 0.6, BASE_SPD);
   spawnInterval = Math.max(spawnInterval * 1.4, 90);
-  gameEl.style.transition = 'filter 0.2s';
   gameEl.style.filter = 'brightness(1.15) saturate(1.3)';
   setTimeout(() => {
     speed = prevSpeed;
@@ -593,6 +564,17 @@ function gainLife() {
   }
 }
 
+function syncShieldPosition() {
+  if (!shieldActive) return;
+  shieldBubble.style.left = (LANES[currentLane] - 10) + 'px';
+}
+
+function syncMagnetPosition() {
+  if (!magnetActive) return;
+  magnetField.style.left = (LANES[currentLane] - 21) + 'px';
+}
+
+// ─── CRASH HANDLING ───
 function handleCrash(obs) {
   if (shieldActive) {
     shieldActive = false;
@@ -629,10 +611,7 @@ function triggerScreenShake() {
   if (screenShakeActive) return;
   screenShakeActive = true;
   gameEl.classList.add('screen-shake');
-  setTimeout(() => {
-    gameEl.classList.remove('screen-shake');
-    screenShakeActive = false;
-  }, 400);
+  setTimeout(() => { gameEl.classList.remove('screen-shake'); screenShakeActive = false; }, 400);
 }
 
 function setInvulnerable() {
@@ -650,6 +629,7 @@ function updateLivesDisplay() {
   livesEl.textContent = hearts[Math.max(0, lives)];
 }
 
+// ─── VFX ───
 function spawnScoreRing(obs) {
   const ring = document.createElement('div');
   ring.className = 'score-ring';
@@ -662,23 +642,23 @@ function spawnScoreRing(obs) {
 
 function spawnFloatingText(lane, text, color) {
   const el = document.createElement('div');
-  el.className = 'floating-text';
-  el.textContent = text;
-  el.style.color = color;
+  el.className    = 'floating-text';
+  el.textContent  = text;
+  el.style.color  = color;
   el.style.textShadow = `0 0 10px ${color}`;
-  el.style.left = (LANES[lane] + OBS_W / 2) + 'px';
-  el.style.top  = (GAME_H - 120) + 'px';
+  el.style.left   = (LANES[lane] + OBS_W / 2) + 'px';
+  el.style.top    = (GAME_H - 120) + 'px';
   floatingTextLayer.appendChild(el);
   setTimeout(() => el.remove(), 900);
 }
 
 function spawnCrashParticles(x, y, customColors) {
-  const colors = customColors || ['#ff4500', '#ff7700', '#ffd700', '#ffffff', '#ff2200'];
-  for (let i = 0; i < 18; i++) {
+  const colors = customColors || ['#ff4500','#ff7700','#ffd700','#ffffff','#ff2200'];
+  for (let i = 0; i < 20; i++) {
     const p = document.createElement('div');
     p.className = 'particle';
-    const angle = (i / 18) * Math.PI * 2;
-    const dist  = 30 + Math.random() * 50;
+    const angle = (i / 20) * Math.PI * 2;
+    const dist  = 30 + Math.random() * 55;
     p.style.left       = x + 'px';
     p.style.top        = y + 'px';
     p.style.background = colors[Math.floor(Math.random() * colors.length)];
@@ -690,6 +670,7 @@ function spawnCrashParticles(x, y, customColors) {
   }
 }
 
+// ─── ROAD SPEED SYNC ───
 function syncRoadSpeed() {
   const dur    = Math.max(0.07, 0.32 - (speed - BASE_SPD) * 0.014);
   const durStr = dur + 's';
@@ -699,29 +680,27 @@ function syncRoadSpeed() {
   });
 }
 
+// ─── MARKER ───
 function updateMarkers() {
   markerY += speed;
   if (markerY > GAME_H + 20) {
     markerY = -40;
     const m = document.createElement('div');
-    m.className = 'road-marker';
-    m.textContent = `── ${score} ──`;
-    m.style.top = '-40px';
+    m.className    = 'road-marker';
+    m.textContent  = `── ${score} ──`;
+    m.style.top    = '-40px';
     markerLayer.appendChild(m);
     const startTime = performance.now();
-    function tick(now) {
-      const elapsed = now - startTime;
-      const y = -40 + (speed * elapsed / 16.67);
+    (function tick(now) {
+      const y = -40 + (speed * (now - startTime) / 16.67);
       m.style.top = y + 'px';
       if (y > GAME_H + 20) { m.remove(); return; }
       requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
+    })(performance.now());
   }
 }
 
-let trailTickCount = 0;
-
+// ─── MAIN LOOP ───
 function gameLoop() {
   if (!gameRunning) return;
 
@@ -754,13 +733,12 @@ function gameLoop() {
   syncRoadSpeed();
   syncShieldPosition();
   syncMagnetPosition();
-
-  const zoneIdx = zone - 1;
-  drawRain(zoneIdx);
+  drawRain(zone - 1);
 
   frameId = requestAnimationFrame(gameLoop);
 }
 
+// ─── MOVEMENT ───
 function moveLane(dir) {
   if (!gameRunning) return;
   const next = currentLane + dir;
@@ -780,6 +758,7 @@ function moveLane(dir) {
 
 function tapLane(dir) { moveLane(dir); }
 
+// ─── POP ANIMATION ───
 function popEl(el) {
   el.classList.remove('pop');
   void el.offsetWidth;
@@ -787,6 +766,7 @@ function popEl(el) {
   setTimeout(() => el.classList.remove('pop'), 300);
 }
 
+// ─── GAME START ───
 function startGame() {
   if (gameRunning) return;
 
@@ -794,28 +774,15 @@ function startGame() {
   powerups.forEach(p => p.el.remove());
   coins.forEach(c => c.el.remove());
 
-  obstacles     = [];
-  powerups      = [];
-  coins         = [];
-  score         = 0;
-  speed         = BASE_SPD;
-  spawnTimer    = 0;
-  powerupTimer  = 0;
-  coinTimer     = 0;
+  obstacles = []; powerups = []; coins = [];
+  score = 0; speed = BASE_SPD;
+  spawnTimer = 0; powerupTimer = 0; coinTimer = 0;
   spawnInterval = 90;
-  currentLane   = 1;
-  lives         = MAX_LIVES;
-  combo         = 0;
-  bestCombo     = 0;
-  zone          = 1;
-  feverCombo    = 0;
-  feverActive   = false;
-  shieldActive  = false;
-  magnetActive  = false;
-  invulnerable  = false;
-  markerY       = -40;
-  sessionCoins  = 0;
-  trailTickCount= 0;
+  currentLane = 1; lives = MAX_LIVES;
+  combo = 0; bestCombo = 0; zone = 1;
+  feverCombo = 0; feverActive = false;
+  shieldActive = false; magnetActive = false; invulnerable = false;
+  markerY = -40; sessionCoins = 0; trailTickCount = 0;
 
   bikeEl.style.opacity = '1';
   bikeEl.style.filter  = '';
@@ -824,18 +791,18 @@ function startGame() {
   shieldBubble.classList.add('hidden');
   magnetField.classList.add('hidden');
   feverWrap.classList.add('hidden');
-  markerLayer.innerHTML    = '';
-  particleLayer.innerHTML  = '';
+  markerLayer.innerHTML = '';
+  particleLayer.innerHTML = '';
   floatingTextLayer.innerHTML = '';
   trailLayer.innerHTML = '';
   newBestMsg.classList.add('hidden');
   zoneAnnounce.classList.add('hidden');
 
-  scoreEl.textContent    = '0';
-  speedEl.textContent    = '1.0x';
-  zoneEl.textContent     = '1';
+  scoreEl.textContent     = '0';
+  speedEl.textContent     = '1.0x';
+  zoneEl.textContent      = '1';
   coinCountEl.textContent = '0';
-  bikeEl.style.left      = LANES[1] + 'px';
+  bikeEl.style.left       = LANES[1] + 'px';
   bikeEl.classList.remove('lean-left', 'lean-right');
   document.documentElement.style.setProperty('--zone-accent', '#00e5ff');
   updateLivesDisplay();
@@ -848,6 +815,7 @@ function startGame() {
   frameId = requestAnimationFrame(gameLoop);
 }
 
+// ─── RESTART ───
 function restartGame() {
   gameRunning = false;
   cancelAnimationFrame(frameId);
@@ -857,6 +825,7 @@ function restartGame() {
   startGame();
 }
 
+// ─── GAME OVER ───
 function triggerGameOver() {
   gameRunning = false;
   cancelAnimationFrame(frameId);
@@ -872,13 +841,13 @@ function triggerGameOver() {
     localStorage.setItem('motorush_best', bestScore);
   }
 
-  bestEl.textContent    = bestScore;
+  bestEl.textContent       = bestScore;
   startBestVal.textContent = bestScore;
-  goScoreEl.textContent = score;
-  goBestEl.textContent  = bestScore;
-  goComboEl.textContent = bestCombo + 'x';
-  goCoinsEl.textContent = sessionCoins;
-  goZoneEl.textContent  = zone;
+  goScoreEl.textContent    = score;
+  goBestEl.textContent     = bestScore;
+  goComboEl.textContent    = bestCombo + 'x';
+  goCoinsEl.textContent    = sessionCoins;
+  goZoneEl.textContent     = zone;
 
   if (isNewBest) newBestMsg.classList.remove('hidden');
 
@@ -887,7 +856,8 @@ function triggerGameOver() {
   gameOverScreen.classList.add('crash-flash');
 }
 
-document.addEventListener('keydown', (e) => {
+// ─── INPUT ───
+document.addEventListener('keydown', e => {
   if (!gameRunning) {
     if (e.key === 'Enter' || e.key === ' ') {
       if (!startScreen.classList.contains('hidden'))         startGame();
@@ -900,12 +870,10 @@ document.addEventListener('keydown', (e) => {
 });
 
 let touchStartX = 0, touchStartY = 0;
-
 document.addEventListener('touchstart', e => {
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
 }, { passive: true });
-
 document.addEventListener('touchend', e => {
   if (!gameRunning) return;
   const dx = e.changedTouches[0].clientX - touchStartX;
@@ -914,8 +882,9 @@ document.addEventListener('touchend', e => {
   moveLane(dx < 0 ? -1 : 1);
 }, { passive: true });
 
-bikeEl.style.left   = LANES[1] + 'px';
-bestEl.textContent  = bestScore;
+// ─── INIT ───
+bikeEl.style.left    = LANES[1] + 'px';
+bestEl.textContent   = bestScore;
 startBestVal.textContent = bestScore;
 updateLivesDisplay();
 updateComboBar();
