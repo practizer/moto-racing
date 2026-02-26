@@ -1,9 +1,3 @@
-// ─────────────────────────────────────────────
-//  MOTO RUSH — STREET LEGEND
-//  Game Logic v3.0
-// ─────────────────────────────────────────────
-
-// ─── DOM REFS ───
 const bikeEl            = document.getElementById('bike');
 const scoreEl           = document.getElementById('score');
 const bestEl            = document.getElementById('best');
@@ -40,7 +34,6 @@ const zoneAnnounce      = document.getElementById('zoneAnnounce');
 const startBestVal      = document.getElementById('startBestVal');
 const rainCanvas        = document.getElementById('rainCanvas');
 
-// ─── CONSTANTS ───
 const GAME_W       = 300;
 const GAME_H       = 510;
 const LANES        = [28, 130, 232];
@@ -56,7 +49,6 @@ const INVULN_MS    = 1400;
 const FEVER_MAX    = 20;
 const FEVER_DRAIN  = 0.015;
 
-// ─── ZONE THEMES ───
 const ZONE_THEMES = [
   { name: 'CITY',     color: '#00e5ff', bg: '#0c0e14', road: '#0f111a' },
   { name: 'DESERT',   color: '#ffd700', bg: '#1a0e00', road: '#1e1200' },
@@ -66,7 +58,6 @@ const ZONE_THEMES = [
   { name: 'VOLCANIC', color: '#ff4500', bg: '#140000', road: '#1a0000' },
 ];
 
-// ─── POWERUP TYPES ───
 const POWERUP_TYPES = [
   { type: 'shield', icon: '🛡️', chance: 0.28 },
   { type: 'boost',  icon: '⚡',  chance: 0.25 },
@@ -75,7 +66,6 @@ const POWERUP_TYPES = [
   { type: 'nuke',   icon: '💣', chance: 0.12 },
 ];
 
-// ─── OBS COLOR PALETTES ───
 const OBS_PALETTES = [
   { body: '#ff4444', tint: '#ff8888', dark: '#200000' },
   { body: '#ffd700', tint: '#ffe566', dark: '#201a00' },
@@ -87,7 +77,6 @@ const OBS_PALETTES = [
   { body: '#00ffcc', tint: '#88ffee', dark: '#001a12' },
 ];
 
-// ─── STATE ───
 let currentLane    = 1;
 let gameRunning    = false;
 let score          = 0;
@@ -120,25 +109,22 @@ let zone           = 1;
 let feverCombo     = 0;
 let feverActive    = false;
 let feverTimer     = null;
-let trailTimer     = null;
-let lastLane       = 1;
+let trailTickCount = 0;
 let rainDrops      = [];
 let rainCtx        = null;
 let screenShakeActive = false;
-let trailTickCount = 0;
 
-// ─── RAIN ───
 function initRain() {
   rainCanvas.width  = window.innerWidth;
   rainCanvas.height = window.innerHeight;
   rainCanvas.style.cssText = 'position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;';
   rainCtx = rainCanvas.getContext('2d');
-  for (let i = 0; i < 130; i++) {
+  for (let i = 0; i < 140; i++) {
     rainDrops.push({
       x:   Math.random() * window.innerWidth,
       y:   Math.random() * window.innerHeight,
       len: 8  + Math.random() * 14,
-      spd: 12 + Math.random() * 16,
+      spd: 12 + Math.random() * 18,
       op:  0.1 + Math.random() * 0.3,
     });
   }
@@ -164,7 +150,6 @@ function drawRain(zoneIdx) {
   rainCtx.globalAlpha = 1;
 }
 
-// ─── OBSTACLE SVG ───
 function makeObstacleSVG(p) {
   const { body, tint, dark } = p;
   return `<svg viewBox="0 0 40 68" xmlns="http://www.w3.org/2000/svg">
@@ -185,7 +170,6 @@ function makeObstacleSVG(p) {
   </svg>`;
 }
 
-// ─── SPAWN ───
 function spawnObstacle() {
   const occupied = obstacles.filter(o => o.top < 130).map(o => o.lane);
   const free = [0, 1, 2].filter(l => !occupied.includes(l));
@@ -193,7 +177,6 @@ function spawnObstacle() {
 
   const lane    = free[Math.floor(Math.random() * free.length)];
   const palette = OBS_PALETTES[Math.floor(Math.random() * OBS_PALETTES.length)];
-
   const el = document.createElement('div');
   el.className = 'obstacle';
   el.innerHTML = makeObstacleSVG(palette);
@@ -202,7 +185,7 @@ function spawnObstacle() {
 
   if (zone >= 3) {
     const zColor = ZONE_THEMES[zone - 1]?.color || '#fff';
-    el.style.filter = `drop-shadow(0 0 8px ${zColor})`;
+    el.style.filter = `drop-shadow(0 0 9px ${zColor})`;
   }
 
   obstaclesLayer.appendChild(el);
@@ -254,13 +237,12 @@ function spawnTrail() {
     t.style.left = (x + (Math.random() - 0.5) * 10) + 'px';
     t.style.top  = y + 'px';
     t.style.background = colors[Math.floor(Math.random() * colors.length)];
-    if (feverActive) t.style.boxShadow = `0 0 6px ${colors[0]}`;
+    if (feverActive) t.style.boxShadow = `0 0 7px ${colors[0]}`;
     trailLayer.appendChild(t);
     setTimeout(() => t.remove(), 350);
   }
 }
 
-// ─── UPDATE LOOPS ───
 function updateObstacles() {
   const moveSpd = feverActive ? speed * 1.5 : speed;
   for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -287,12 +269,7 @@ function updatePowerups() {
     const pu = powerups[i];
     pu.top += speed;
     pu.el.style.top = pu.top + 'px';
-
-    if (pu.top > GAME_H) {
-      pu.el.remove();
-      powerups.splice(i, 1);
-      continue;
-    }
+    if (pu.top > GAME_H) { pu.el.remove(); powerups.splice(i, 1); continue; }
     if (checkCollision(pu, 32, 32)) collectPowerup(pu, i);
   }
 }
@@ -318,12 +295,7 @@ function updateCoins() {
     }
 
     c.el.style.top = c.top + 'px';
-
-    if (c.top > GAME_H) {
-      c.el.remove();
-      coins.splice(i, 1);
-      continue;
-    }
+    if (c.top > GAME_H) { c.el.remove(); coins.splice(i, 1); continue; }
 
     const coinX = LANES[c.lane] + (OBS_W - 24) / 2 + (c.magnetX || 0);
     const pad = 4;
@@ -336,7 +308,6 @@ function updateCoins() {
   }
 }
 
-// ─── COLLECT ───
 function collectCoin(c, idx) {
   c.el.remove();
   coins.splice(idx, 1);
@@ -350,22 +321,21 @@ function collectCoin(c, idx) {
 }
 
 function spawnCoinBurst(x, y) {
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 6; i++) {
     const p = document.createElement('div');
     p.className = 'particle';
-    const angle = (i / 5) * Math.PI * 2;
+    const angle = (i / 6) * Math.PI * 2;
     p.style.left       = x + 'px';
     p.style.top        = y + 'px';
     p.style.background = '#ffd700';
-    p.style.setProperty('--dx', Math.cos(angle) * 20 + 'px');
-    p.style.setProperty('--dy', Math.sin(angle) * 20 + 'px');
+    p.style.setProperty('--dx', Math.cos(angle) * 22 + 'px');
+    p.style.setProperty('--dy', Math.sin(angle) * 22 + 'px');
     p.style.animationDuration = '0.4s';
     particleLayer.appendChild(p);
     setTimeout(() => p.remove(), 500);
   }
 }
 
-// ─── FEVER ───
 function updateFever() {
   if (!feverActive) return;
   feverCombo -= FEVER_DRAIN;
@@ -378,7 +348,7 @@ function activateFever() {
   feverActive = true;
   feverWrap.classList.remove('hidden');
   gameEl.classList.add('fever-mode');
-  bikeEl.style.filter = 'drop-shadow(0 0 16px #ff4500) drop-shadow(0 0 32px #ffd700)';
+  bikeEl.style.filter = 'drop-shadow(0 0 18px #ff4500) drop-shadow(0 0 36px #ffd700)';
   spawnFloatingText(currentLane, '🔥 FEVER MODE!', '#ff4500');
 }
 
@@ -391,7 +361,6 @@ function deactivateFever() {
   updateComboBar();
 }
 
-// ─── COLLISION ───
 function checkCollision(obj, w, h) {
   const bikeLeft = LANES[currentLane];
   const bikeTop  = GAME_H - 22 - BIKE_H;
@@ -405,7 +374,6 @@ function checkCollision(obj, w, h) {
   );
 }
 
-// ─── SCORING ───
 function addScore(obs) {
   score++;
   combo++;
@@ -446,7 +414,6 @@ function addScore(obs) {
   }
 }
 
-// ─── ZONE CHANGE ───
 function triggerZoneChange() {
   const theme = ZONE_THEMES[zone - 1] || ZONE_THEMES[0];
   zoneEl.textContent = zone;
@@ -455,9 +422,9 @@ function triggerZoneChange() {
   document.documentElement.style.setProperty('--zone-accent', theme.color);
   gameEl.style.setProperty('--zone-accent', theme.color);
 
-  zoneAnnounce.textContent = `ZONE ${zone} — ${theme.name}`;
+  zoneAnnounce.textContent  = `ZONE ${zone} — ${theme.name}`;
   zoneAnnounce.style.color      = theme.color;
-  zoneAnnounce.style.textShadow = `0 0 22px ${theme.color}`;
+  zoneAnnounce.style.textShadow = `0 0 26px ${theme.color}`;
   zoneAnnounce.classList.remove('hidden');
   zoneAnnounce.classList.add('zone-pop');
   setTimeout(() => {
@@ -466,7 +433,6 @@ function triggerZoneChange() {
   }, 2200);
 }
 
-// ─── COMBO BAR ───
 function updateComboBar() {
   const pct = Math.min((combo / COMBO_MAX) * 100, 100);
   comboFill.style.width = pct + '%';
@@ -490,7 +456,6 @@ function resetCombo() {
   updateComboBar();
 }
 
-// ─── POWERUP COLLECTION ───
 function collectPowerup(pu, idx) {
   pu.el.remove();
   powerups.splice(idx, 1);
@@ -548,7 +513,7 @@ function activateBoost() {
   const prevSpeed = speed, prevInterval = spawnInterval;
   speed = Math.max(speed * 0.6, BASE_SPD);
   spawnInterval = Math.max(spawnInterval * 1.4, 90);
-  gameEl.style.filter = 'brightness(1.15) saturate(1.3)';
+  gameEl.style.filter = 'brightness(1.18) saturate(1.35)';
   setTimeout(() => {
     speed = prevSpeed;
     spawnInterval = prevInterval;
@@ -574,7 +539,6 @@ function syncMagnetPosition() {
   magnetField.style.left = (LANES[currentLane] - 21) + 'px';
 }
 
-// ─── CRASH HANDLING ───
 function handleCrash(obs) {
   if (shieldActive) {
     shieldActive = false;
@@ -629,7 +593,6 @@ function updateLivesDisplay() {
   livesEl.textContent = hearts[Math.max(0, lives)];
 }
 
-// ─── VFX ───
 function spawnScoreRing(obs) {
   const ring = document.createElement('div');
   ring.className = 'score-ring';
@@ -645,7 +608,7 @@ function spawnFloatingText(lane, text, color) {
   el.className    = 'floating-text';
   el.textContent  = text;
   el.style.color  = color;
-  el.style.textShadow = `0 0 10px ${color}`;
+  el.style.textShadow = `0 0 12px ${color}`;
   el.style.left   = (LANES[lane] + OBS_W / 2) + 'px';
   el.style.top    = (GAME_H - 120) + 'px';
   floatingTextLayer.appendChild(el);
@@ -654,23 +617,22 @@ function spawnFloatingText(lane, text, color) {
 
 function spawnCrashParticles(x, y, customColors) {
   const colors = customColors || ['#ff4500','#ff7700','#ffd700','#ffffff','#ff2200'];
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 22; i++) {
     const p = document.createElement('div');
     p.className = 'particle';
-    const angle = (i / 20) * Math.PI * 2;
-    const dist  = 30 + Math.random() * 55;
+    const angle = (i / 22) * Math.PI * 2;
+    const dist  = 32 + Math.random() * 58;
     p.style.left       = x + 'px';
     p.style.top        = y + 'px';
     p.style.background = colors[Math.floor(Math.random() * colors.length)];
     p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
     p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
-    p.style.animationDuration = (0.4 + Math.random() * 0.3) + 's';
+    p.style.animationDuration = (0.4 + Math.random() * 0.32) + 's';
     particleLayer.appendChild(p);
     setTimeout(() => p.remove(), 800);
   }
 }
 
-// ─── ROAD SPEED SYNC ───
 function syncRoadSpeed() {
   const dur    = Math.max(0.07, 0.32 - (speed - BASE_SPD) * 0.014);
   const durStr = dur + 's';
@@ -680,15 +642,14 @@ function syncRoadSpeed() {
   });
 }
 
-// ─── MARKER ───
 function updateMarkers() {
   markerY += speed;
   if (markerY > GAME_H + 20) {
     markerY = -40;
     const m = document.createElement('div');
-    m.className    = 'road-marker';
-    m.textContent  = `── ${score} ──`;
-    m.style.top    = '-40px';
+    m.className   = 'road-marker';
+    m.textContent = `── ${score} ──`;
+    m.style.top   = '-40px';
     markerLayer.appendChild(m);
     const startTime = performance.now();
     (function tick(now) {
@@ -700,7 +661,6 @@ function updateMarkers() {
   }
 }
 
-// ─── MAIN LOOP ───
 function gameLoop() {
   if (!gameRunning) return;
 
@@ -738,13 +698,11 @@ function gameLoop() {
   frameId = requestAnimationFrame(gameLoop);
 }
 
-// ─── MOVEMENT ───
 function moveLane(dir) {
   if (!gameRunning) return;
   const next = currentLane + dir;
   if (next < 0 || next > 2) return;
 
-  lastLane    = currentLane;
   currentLane = next;
   bikeEl.style.left = LANES[currentLane] + 'px';
 
@@ -758,7 +716,6 @@ function moveLane(dir) {
 
 function tapLane(dir) { moveLane(dir); }
 
-// ─── POP ANIMATION ───
 function popEl(el) {
   el.classList.remove('pop');
   void el.offsetWidth;
@@ -766,7 +723,6 @@ function popEl(el) {
   setTimeout(() => el.classList.remove('pop'), 300);
 }
 
-// ─── GAME START ───
 function startGame() {
   if (gameRunning) return;
 
@@ -815,7 +771,6 @@ function startGame() {
   frameId = requestAnimationFrame(gameLoop);
 }
 
-// ─── RESTART ───
 function restartGame() {
   gameRunning = false;
   cancelAnimationFrame(frameId);
@@ -825,7 +780,6 @@ function restartGame() {
   startGame();
 }
 
-// ─── GAME OVER ───
 function triggerGameOver() {
   gameRunning = false;
   cancelAnimationFrame(frameId);
@@ -856,7 +810,6 @@ function triggerGameOver() {
   gameOverScreen.classList.add('crash-flash');
 }
 
-// ─── INPUT ───
 document.addEventListener('keydown', e => {
   if (!gameRunning) {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -882,7 +835,6 @@ document.addEventListener('touchend', e => {
   moveLane(dx < 0 ? -1 : 1);
 }, { passive: true });
 
-// ─── INIT ───
 bikeEl.style.left    = LANES[1] + 'px';
 bestEl.textContent   = bestScore;
 startBestVal.textContent = bestScore;
