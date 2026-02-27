@@ -1,55 +1,65 @@
-const bikeEl            = document.getElementById('bike');
-const scoreEl           = document.getElementById('score');
-const bestEl            = document.getElementById('best');
-const speedEl           = document.getElementById('speedDisplay');
-const livesEl           = document.getElementById('livesDisplay');
-const zoneEl            = document.getElementById('zoneDisplay');
-const startScreen       = document.getElementById('startScreen');
-const gameOverScreen    = document.getElementById('gameOverScreen');
-const pauseScreen       = document.getElementById('pauseScreen');
-const goScoreEl         = document.getElementById('goScore');
-const goBestEl          = document.getElementById('goBest');
-const goComboEl         = document.getElementById('goCombo');
-const goCoinsEl         = document.getElementById('goCoins');
-const goDriftEl         = document.getElementById('goDrift');
-const goZoneEl          = document.getElementById('goZone');
-const newBestMsg        = document.getElementById('newBestMsg');
-const obstaclesLayer    = document.getElementById('obstaclesLayer');
-const powerupLayer      = document.getElementById('powerupLayer');
-const coinLayer         = document.getElementById('coinLayer');
-const particleLayer     = document.getElementById('particleLayer');
-const floatingTextLayer = document.getElementById('floatingTextLayer');
-const trailLayer        = document.getElementById('trailLayer');
-const markerLayer       = document.getElementById('markerLayer');
-const gameEl            = document.getElementById('game');
-const shieldBubble      = document.getElementById('shieldBubble');
-const magnetField       = document.getElementById('magnetField');
-const comboWrap         = document.getElementById('comboWrap');
-const comboFill         = document.getElementById('comboFill');
-const comboCount        = document.getElementById('comboCount');
-const feverWrap         = document.getElementById('feverWrap');
-const feverFill         = document.getElementById('feverFill');
-const nitroFill         = document.getElementById('nitroFill');
-const nitroMini         = document.getElementById('nitroMini');
-const nitroLabel        = document.getElementById('nitroLabel');
-const nitroWrap         = document.getElementById('nitroWrap');
-const coinCountEl       = document.getElementById('coinCount');
-const zoneAnnounce      = document.getElementById('zoneAnnounce');
-const zoneNumber        = document.getElementById('zoneNumber');
-const zoneName          = document.getElementById('zoneName');
-const zoneSub           = document.getElementById('zoneSub');
-const startBestVal      = document.getElementById('startBestVal');
-const rainCanvas        = document.getElementById('rainCanvas');
-const roadCanvas        = document.getElementById('roadCanvas');
-const effectCanvas      = document.getElementById('effectCanvas');
-const damageFlash       = document.getElementById('damageFlash');
-const speedLines        = document.getElementById('speedLines');
-const nitroLines        = document.getElementById('nitroLines');
-const nitroAnnounce     = document.getElementById('nitroAnnounce');
-const driftAnnounce     = document.getElementById('driftAnnounce');
-const ghostAnnounce     = document.getElementById('ghostAnnounce');
+const bikeEl             = document.getElementById('bike');
+const scoreEl            = document.getElementById('score');
+const bestEl             = document.getElementById('best');
+const speedEl            = document.getElementById('speedDisplay');
+const livesEl            = document.getElementById('livesDisplay');
+const zoneEl             = document.getElementById('zoneDisplay');
+const startScreen        = document.getElementById('startScreen');
+const gameOverScreen     = document.getElementById('gameOverScreen');
+const pauseScreen        = document.getElementById('pauseScreen');
+const goScoreEl          = document.getElementById('goScore');
+const goBestEl           = document.getElementById('goBest');
+const goComboEl          = document.getElementById('goCombo');
+const goCoinsEl          = document.getElementById('goCoins');
+const goDriftEl          = document.getElementById('goDrift');
+const goZoneEl           = document.getElementById('goZone');
+const goRecordsEl        = document.getElementById('goRecords');
+const recBestEl          = document.getElementById('recBest');
+const recComboEl         = document.getElementById('recCombo');
+const recDriftEl         = document.getElementById('recDrift');
+const lbListEl           = document.getElementById('lbList');
+const obstaclesLayer     = document.getElementById('obstaclesLayer');
+const powerupLayer       = document.getElementById('powerupLayer');
+const coinLayer          = document.getElementById('coinLayer');
+const particleLayer      = document.getElementById('particleLayer');
+const floatingTextLayer  = document.getElementById('floatingTextLayer');
+const trailLayer         = document.getElementById('trailLayer');
+const markerLayer        = document.getElementById('markerLayer');
+const gameEl             = document.getElementById('game');
+const shieldBubble       = document.getElementById('shieldBubble');
+const magnetField        = document.getElementById('magnetField');
+const comboWrap          = document.getElementById('comboWrap');
+const comboFill          = document.getElementById('comboFill');
+const comboCount         = document.getElementById('comboCount');
+const feverWrap          = document.getElementById('feverWrap');
+const feverFill          = document.getElementById('feverFill');
+const nitroFill          = document.getElementById('nitroFill');
+const nitroMini          = document.getElementById('nitroMini');
+const nitroLabel         = document.getElementById('nitroLabel');
+const nitroWrap          = document.getElementById('nitroWrap');
+const coinCountEl        = document.getElementById('coinCount');
+const zoneAnnounce       = document.getElementById('zoneAnnounce');
+const zoneNumber         = document.getElementById('zoneNumber');
+const zoneName           = document.getElementById('zoneName');
+const zoneSub            = document.getElementById('zoneSub');
+const startBestVal       = document.getElementById('startBestVal');
+const startTotalCoins    = document.getElementById('startTotalCoins');
+const startTotalRuns     = document.getElementById('startTotalRuns');
+const startBestDrift     = document.getElementById('startBestDrift');
+const rainCanvas         = document.getElementById('rainCanvas');
+const roadCanvas         = document.getElementById('roadCanvas');
+const effectCanvas       = document.getElementById('effectCanvas');
+const damageFlash        = document.getElementById('damageFlash');
+const speedLines         = document.getElementById('speedLines');
+const nitroLines         = document.getElementById('nitroLines');
+const nitroAnnounce      = document.getElementById('nitroAnnounce');
+const driftAnnounce      = document.getElementById('driftAnnounce');
+const ghostAnnounce      = document.getElementById('ghostAnnounce');
 const multiplierAnnounce = document.getElementById('multiplierAnnounce');
-const scoreMultiplierEl = document.getElementById('scoreMultiplier');
+const scoreMultiplierEl  = document.getElementById('scoreMultiplier');
+const pauseScore         = document.getElementById('pauseScore');
+const pauseZone          = document.getElementById('pauseZone');
+const pauseCombo         = document.getElementById('pauseCombo');
 
 const GAME_W        = 420;
 const GAME_H        = 540;
@@ -106,64 +116,61 @@ const OBS_PALETTES = [
   { body: '#00ffcc', tint: '#88ffee', dark: '#001a12' },
 ];
 
-let currentLane      = 2;
-let gameRunning      = false;
-let gamePaused       = false;
-let score            = 0;
-let bestScore        = parseInt(localStorage.getItem('motorush_best') || '0');
-let speed            = BASE_SPD;
-let frameId          = null;
-let obstacles        = [];
-let powerups         = [];
-let coins            = [];
-let spawnTimer       = 0;
-let powerupTimer     = 0;
-let coinTimer        = 0;
-let spawnInterval    = 90;
-let powerupInterval  = 200;
-let coinInterval     = 50;
-let leanTimer        = null;
-let lives            = MAX_LIVES;
-let shieldActive     = false;
-let shieldTimer      = null;
-let magnetActive     = false;
-let magnetTimer      = null;
-let ghostActive      = false;
-let ghostTimer       = null;
-let invulnerable     = false;
-let invulnTimer      = null;
-let combo            = 0;
-let bestCombo        = 0;
-let markerY          = -40;
-let totalCoins       = 0;
-let sessionCoins     = 0;
-let zone             = 1;
-let feverCombo       = 0;
-let feverActive      = false;
-let trailTickCount   = 0;
-let rainDrops        = [];
-let rainCtx          = null;
-let roadCtx          = null;
-let effectCtx        = null;
-let roadOffset       = 0;
+let currentLane       = 2;
+let gameRunning       = false;
+let gamePaused        = false;
+let score             = 0;
+let speed             = BASE_SPD;
+let frameId           = null;
+let obstacles         = [];
+let powerups          = [];
+let coins             = [];
+let spawnTimer        = 0;
+let powerupTimer      = 0;
+let coinTimer         = 0;
+let spawnInterval     = 90;
+let powerupInterval   = 200;
+let coinInterval      = 50;
+let leanTimer         = null;
+let lives             = MAX_LIVES;
+let shieldActive      = false;
+let shieldTimer       = null;
+let magnetActive      = false;
+let magnetTimer       = null;
+let ghostActive       = false;
+let ghostTimer        = null;
+let invulnerable      = false;
+let invulnTimer       = null;
+let combo             = 0;
+let bestCombo         = 0;
+let markerY           = -40;
+let sessionCoins      = 0;
+let zone              = 1;
+let feverCombo        = 0;
+let feverActive       = false;
+let trailTickCount    = 0;
+let rainDrops         = [];
+let rainCtx           = null;
+let roadCtx           = null;
+let effectCtx         = null;
+let roadOffset        = 0;
 let screenShakeActive = false;
-let bgCtx            = null;
-let logoCtx          = null;
-let logoAngle        = 0;
-let nitroCharge      = 0;
-let nitroActive      = false;
-let nitroTimer       = null;
-let nitroKeyHeld     = false;
-let driftCount       = 0;
-let lastLane         = 2;
-let driftCombo       = 0;
-let driftTimer       = null;
-let scoreMultiplier  = 1;
-let multiplierTimer  = null;
-let nearMissCount    = 0;
-let lastFrameTime    = 0;
-let frameCount       = 0;
-let lightningTimer   = 0;
+let bgCtx             = null;
+let logoCtx           = null;
+let logoAngle         = 0;
+let nitroCharge       = 0;
+let nitroActive       = false;
+let nitroTimer        = null;
+let nitroKeyHeld      = false;
+let driftCount        = 0;
+let lastLane          = 2;
+let driftCombo        = 0;
+let driftTimer        = null;
+let scoreMultiplier   = 1;
+let multiplierTimer   = null;
+let nearMissCount     = 0;
+let lightningTimer    = 0;
+let dodgeCount        = 0;
 
 function initBgCanvas() {
   const bgCanvas = document.getElementById('bgCanvas');
@@ -508,7 +515,7 @@ function checkNearMiss() {
   const bikeTop  = GAME_H - 22 - BIKE_H;
   for (const obs of obstacles) {
     if (obs.passed) continue;
-    const obsLeft = LANES[obs.lane] + (OBS_W - OBS_W) / 2;
+    const obsLeft = LANES[obs.lane];
     const hDist = Math.abs((bikeLeft + BIKE_W / 2) - (obsLeft + OBS_W / 2));
     const vOverlap = obs.top + OBS_H > bikeTop && obs.top < bikeTop + BIKE_H;
     if (vOverlap && hDist > BIKE_W + 2 && hDist < BIKE_W + NEAR_MISS_DIST + OBS_W / 2) {
@@ -592,7 +599,7 @@ function updateCoins() {
 function collectCoin(c, idx) {
   c.el.remove(); coins.splice(idx, 1);
   const bonus = nitroActive ? 4 : ghostActive ? 3 : feverActive ? 3 : scoreMultiplier;
-  sessionCoins += bonus; totalCoins += bonus;
+  sessionCoins += bonus;
   coinCountEl.textContent = sessionCoins;
   popEl(coinCountEl.parentElement);
   const label = nitroActive ? `🪙x${bonus} NITRO!` : ghostActive ? `🪙x${bonus} GHOST!` : feverActive ? `🪙x${bonus} FEVER!` : bonus > 1 ? `🪙 x${bonus}!` : '🪙+1';
@@ -780,6 +787,7 @@ function addScore(obs) {
   const gained = scoreMultiplier;
   score += gained;
   combo++;
+  dodgeCount++;
   feverCombo = Math.min(feverCombo + 1, FEVER_MAX);
   nitroCharge = Math.min(nitroCharge + NITRO_CHARGE, NITRO_MAX);
   if (combo > bestCombo) bestCombo = combo;
@@ -863,13 +871,13 @@ function collectPowerup(pu, idx) {
   pu.el.remove(); powerups.splice(idx, 1);
   spawnCollectBurst(LANES[pu.lane] + OBS_W / 2, pu.top + 17, pu.type);
   switch (pu.type) {
-    case 'shield':    activateShield();          spawnFloatingText(pu.lane, '🛡️ SHIELD!',    '#00e5ff'); break;
-    case 'boost':     activateBoost();           spawnFloatingText(pu.lane, '⚡ BOOST!',      '#ffd700'); break;
-    case 'life':      gainLife();                spawnFloatingText(pu.lane, '💜 +1 LIFE',    '#ff80aa'); break;
-    case 'magnet':    activateMagnet();          spawnFloatingText(pu.lane, '🧲 MAGNET!',    '#bf5fff'); break;
-    case 'nuke':      activateNuke();            spawnFloatingText(pu.lane, '💣 NUKE!',      '#ff4500'); break;
-    case 'nitropack': collectNitroPack();        spawnFloatingText(pu.lane, '💨 NITRO +50!', '#00e5ff'); break;
-    case 'ghost':     activateGhost();           spawnFloatingText(pu.lane, '👻 GHOST!',     '#aaaaff'); break;
+    case 'shield':    activateShield();    spawnFloatingText(pu.lane, '🛡️ SHIELD!',    '#00e5ff'); break;
+    case 'boost':     activateBoost();     spawnFloatingText(pu.lane, '⚡ BOOST!',      '#ffd700'); break;
+    case 'life':      gainLife();          spawnFloatingText(pu.lane, '💜 +1 LIFE',    '#ff80aa'); break;
+    case 'magnet':    activateMagnet();    spawnFloatingText(pu.lane, '🧲 MAGNET!',    '#bf5fff'); break;
+    case 'nuke':      activateNuke();      spawnFloatingText(pu.lane, '💣 NUKE!',      '#ff4500'); break;
+    case 'nitropack': collectNitroPack();  spawnFloatingText(pu.lane, '💨 NITRO +50!', '#00e5ff'); break;
+    case 'ghost':     activateGhost();     spawnFloatingText(pu.lane, '👻 GHOST!',     '#aaaaff'); break;
   }
 }
 
@@ -1100,6 +1108,9 @@ function pauseGame() {
   if (!gameRunning || gamePaused) return;
   gamePaused = true;
   cancelAnimationFrame(frameId);
+  pauseScore.textContent = score;
+  pauseZone.textContent  = zone;
+  pauseCombo.textContent = 'x' + combo;
   pauseScreen.classList.remove('hidden');
 }
 
@@ -1171,6 +1182,14 @@ function popEl(el) {
   setTimeout(() => el.classList.remove('pop'), 320);
 }
 
+function loadStartScreenStats() {
+  startBestVal.textContent    = Storage.getBestScore();
+  startTotalCoins.textContent = Storage.getTotalCoins();
+  startTotalRuns.textContent  = Storage.getTotalRuns();
+  startBestDrift.textContent  = Storage.getBestDrift();
+  bestEl.textContent          = Storage.getBestScore();
+}
+
 function startGame() {
   if (gameRunning) return;
   obstacles.forEach(o => o.el.remove());
@@ -1187,7 +1206,7 @@ function startGame() {
   markerY = -40; sessionCoins = 0; trailTickCount = 0; roadOffset = 0;
   nitroCharge = 0; nitroActive = false; driftCount = 0; driftCombo = 0;
   lastLane = 2; nearMissCount = 0; scoreMultiplier = 1;
-  gamePaused = false; lightningTimer = 0;
+  gamePaused = false; lightningTimer = 0; dodgeCount = 0;
 
   bikeEl.style.opacity = '1';
   bikeEl.style.filter  = '';
@@ -1206,7 +1225,6 @@ function startGame() {
   particleLayer.innerHTML = '';
   floatingTextLayer.innerHTML = '';
   trailLayer.innerHTML = '';
-  newBestMsg.classList.add('hidden');
   zoneAnnounce.classList.add('hidden');
   damageFlash.style.opacity = '0';
 
@@ -1241,6 +1259,54 @@ function restartGame() {
   startGame();
 }
 
+function goToMenu() {
+  gameRunning = false;
+  gamePaused = false;
+  cancelAnimationFrame(frameId);
+  clearTimeout(shieldTimer);
+  clearTimeout(magnetTimer);
+  clearTimeout(invulnTimer);
+  clearTimeout(driftTimer);
+  clearTimeout(ghostTimer);
+  clearTimeout(multiplierTimer);
+
+  obstacles.forEach(o => o.el.remove());
+  powerups.forEach(p => p.el.remove());
+  coins.forEach(c => c.el.remove());
+  obstacles = []; powerups = []; coins = [];
+
+  gameOverScreen.classList.add('hidden');
+  pauseScreen.classList.add('hidden');
+  loadStartScreenStats();
+  startScreen.classList.remove('hidden');
+}
+
+function renderLeaderboard(lb, currentScore) {
+  lbListEl.innerHTML = '';
+  if (!lb || lb.length === 0) {
+    lbListEl.innerHTML = '<div style="text-align:center;font-size:8px;color:rgba(255,255,255,0.2);padding:4px">NO RUNS YET</div>';
+    return;
+  }
+  lb.slice(0, 5).forEach((entry, idx) => {
+    const div = document.createElement('div');
+    div.className = 'lb-entry';
+    const rankClasses = ['gold', 'silver', 'bronze'];
+    const rankSymbols = ['🥇', '🥈', '🥉'];
+    const rankClass = rankClasses[idx] || '';
+    const rankSymbol = rankSymbols[idx] || `#${idx + 1}`;
+    const isCurrent = entry.score === currentScore && idx === lb.findIndex(e => e.score === currentScore);
+    const date = new Date(entry.date);
+    const dateStr = `${date.getMonth()+1}/${date.getDate()}`;
+    div.innerHTML = `
+      <span class="lb-rank ${rankClass}">${rankSymbol}</span>
+      <span class="lb-score ${isCurrent ? 'current' : ''}">${entry.score}</span>
+      <span class="lb-meta">Z${entry.zone} C${entry.combo}x</span>
+      <span class="lb-zone">${dateStr}</span>
+    `;
+    lbListEl.appendChild(div);
+  });
+}
+
 function triggerGameOver() {
   gameRunning = false;
   gamePaused = false;
@@ -1257,24 +1323,60 @@ function triggerGameOver() {
   spawnCrashParticles(LANES[currentLane] + BIKE_W / 2, GAME_H - 22 - BIKE_H / 2, null);
   flashDamage('rgba(255,0,0,0.5)');
 
-  const isNewBest = score > bestScore;
-  if (isNewBest) { bestScore = score; localStorage.setItem('motorush_best', bestScore); }
+  const { newRecords, leaderboard } = Storage.saveRun({
+    score,
+    coins:      sessionCoins,
+    combo:      bestCombo,
+    drift:      driftCount,
+    zone,
+    nearMisses: nearMissCount,
+    dodges:     dodgeCount,
+  });
 
-  bestEl.textContent       = bestScore;
-  startBestVal.textContent = bestScore;
-  goScoreEl.textContent    = score;
-  goBestEl.textContent     = bestScore;
-  goComboEl.textContent    = bestCombo + 'x';
-  goCoinsEl.textContent    = sessionCoins;
-  goDriftEl.textContent    = driftCount;
-  goZoneEl.textContent     = zone;
+  const savedBest = Storage.getBestScore();
+  bestEl.textContent    = savedBest;
+  goScoreEl.textContent = score;
+  goBestEl.textContent  = savedBest;
+  goComboEl.textContent = bestCombo + 'x';
+  goCoinsEl.textContent = sessionCoins;
+  goDriftEl.textContent = driftCount;
+  goZoneEl.textContent  = zone;
 
-  if (isNewBest) newBestMsg.classList.remove('hidden');
+  let anyRecord = false;
+  recBestEl.classList.add('hidden');
+  recComboEl.classList.add('hidden');
+  recDriftEl.classList.add('hidden');
+
+  if (newRecords.bestScore)  { recBestEl.classList.remove('hidden');  anyRecord = true; }
+  if (newRecords.bestCombo)  { recComboEl.classList.remove('hidden'); anyRecord = true; }
+  if (newRecords.bestDrift)  { recDriftEl.classList.remove('hidden'); anyRecord = true; }
+
+  if (anyRecord) goRecordsEl.classList.remove('hidden');
+  else goRecordsEl.classList.add('hidden');
+
+  renderLeaderboard(leaderboard, score);
 
   gameOverScreen.classList.remove('hidden', 'crash-flash');
   void gameOverScreen.offsetWidth;
   gameOverScreen.classList.add('crash-flash');
 }
+
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('btnStart').addEventListener('click', startGame);
+document.getElementById('btnRetry').addEventListener('click', restartGame);
+document.getElementById('btnMenu').addEventListener('click', goToMenu);
+document.getElementById('btnResume').addEventListener('click', resumeGame);
+document.getElementById('btnQuit').addEventListener('click', goToMenu);
+document.getElementById('tapLeft').addEventListener('touchstart', () => tapLane(-2), { passive: true });
+document.getElementById('tapLeft').addEventListener('mousedown', () => tapLane(-2));
+document.getElementById('tapLeftOne').addEventListener('touchstart', () => tapLane(-1), { passive: true });
+document.getElementById('tapLeftOne').addEventListener('mousedown', () => tapLane(-1));
+document.getElementById('tapRightOne').addEventListener('touchstart', () => tapLane(1), { passive: true });
+document.getElementById('tapRightOne').addEventListener('mousedown', () => tapLane(1));
+document.getElementById('tapRight').addEventListener('touchstart', () => tapLane(2), { passive: true });
+document.getElementById('tapRight').addEventListener('mousedown', () => tapLane(2));
+document.getElementById('nitroBtn').addEventListener('touchstart', activateNitro, { passive: true });
+document.getElementById('nitroBtn').addEventListener('mousedown', activateNitro);
 
 document.addEventListener('keydown', e => {
   if (!gameRunning || gamePaused) {
@@ -1288,12 +1390,8 @@ document.addEventListener('keydown', e => {
     }
     return;
   }
-  if (e.key === 'ArrowLeft'  || e.key === 'a' || e.key === 'A') {
-    moveLane(e.shiftKey ? -2 : -1); e.preventDefault();
-  }
-  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-    moveLane(e.shiftKey ? 2 : 1); e.preventDefault();
-  }
+  if (e.key === 'ArrowLeft'  || e.key === 'a' || e.key === 'A') { moveLane(e.shiftKey ? -2 : -1); e.preventDefault(); }
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { moveLane(e.shiftKey ? 2 : 1);  e.preventDefault(); }
   if (e.key === ' ' && !nitroKeyHeld) { activateNitro(); e.preventDefault(); }
   if (e.key === 'p' || e.key === 'P') { togglePause(); e.preventDefault(); }
 });
@@ -1320,9 +1418,8 @@ document.addEventListener('touchend', e => {
   moveLane(laneMove);
 }, { passive: true });
 
-bikeEl.style.left       = LANES[2] + 'px';
-bestEl.textContent      = bestScore;
-startBestVal.textContent = bestScore;
+bikeEl.style.left = LANES[2] + 'px';
+loadStartScreenStats();
 updateLivesDisplay();
 updateComboBar();
 updateNitroBar();

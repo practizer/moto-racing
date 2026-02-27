@@ -36,7 +36,7 @@
         </div>
         <div class="logo-badge">
           <span class="badge-dot"></span>
-          v6.0
+          v7.0
         </div>
       </div>
     </header>
@@ -173,7 +173,6 @@
             <div class="magnet-ring r2"></div>
             <div class="magnet-ring r3"></div>
           </div>
-          <div class="ghost-trail hidden" id="ghostTrail"></div>
 
           <div class="screen" id="startScreen">
             <div class="screen-inner">
@@ -202,13 +201,29 @@
                 <div class="feat-item"><span class="feat-icon">👻</span><span>Ghost</span></div>
               </div>
 
-              <div class="hs-box">
-                <span class="hs-label">BEST SCORE</span>
-                <span class="hs-val" id="startBestVal">0</span>
-                <div class="hs-trophy">🏆</div>
+              <div class="stats-panel">
+                <div class="stat-item">
+                  <span class="stat-label">🏆 BEST</span>
+                  <span class="stat-val" id="startBestVal">0</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                  <span class="stat-label">🪙 COINS</span>
+                  <span class="stat-val gold" id="startTotalCoins">0</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                  <span class="stat-label">🎮 RUNS</span>
+                  <span class="stat-val cyan" id="startTotalRuns">0</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                  <span class="stat-label">🌀 DRIFT</span>
+                  <span class="stat-val purple" id="startBestDrift">0</span>
+                </div>
               </div>
 
-              <button class="btn-start" onclick="startGame()">
+              <button class="btn-start" id="btnStart">
                 <div class="btn-bg"></div>
                 <span class="btn-text">START RACE</span>
                 <span class="btn-arrow">▶</span>
@@ -217,8 +232,7 @@
 
               <div class="controls-hint">
                 <div class="key-row">
-                  <kbd>◀</kbd>
-                  <kbd>▶</kbd>
+                  <kbd>◀</kbd><kbd>▶</kbd>
                   <span class="or-text">or</span>
                   <span class="hint-swipe">SWIPE</span>
                   <span class="or-text">or</span>
@@ -226,9 +240,11 @@
                 </div>
                 <div class="key-row" style="margin-top:6px">
                   <kbd>SPACE</kbd>
-                  <span class="or-text">NITRO BOOST</span>
+                  <span class="or-text">NITRO</span>
                   <kbd>SHIFT+◀▶</kbd>
                   <span class="or-text">DOUBLE DRIFT</span>
+                  <kbd>P</kbd>
+                  <span class="or-text">PAUSE</span>
                 </div>
               </div>
             </div>
@@ -276,13 +292,28 @@
                 ZONE REACHED &nbsp;<strong id="goZone">1</strong>
               </div>
 
-              <p class="new-best hidden" id="newBestMsg">🏆 NEW RECORD!</p>
+              <div class="go-records hidden" id="goRecords">
+                <div class="record-row hidden" id="recBest">🏆 NEW BEST SCORE!</div>
+                <div class="record-row hidden" id="recCombo">🎯 NEW BEST COMBO!</div>
+                <div class="record-row hidden" id="recDrift">🌀 NEW BEST DRIFT!</div>
+              </div>
+
+              <div class="leaderboard-mini" id="leaderboardMini">
+                <div class="lb-title">📊 YOUR TOP 5</div>
+                <div id="lbList"></div>
+              </div>
 
               <div class="retry-row">
-                <button class="btn-start btn-retry" onclick="restartGame()">
+                <button class="btn-start btn-retry" id="btnRetry">
                   <div class="btn-bg"></div>
                   <span class="btn-text">TRY AGAIN</span>
                   <span class="btn-arrow">↺</span>
+                  <div class="btn-shine"></div>
+                </button>
+                <button class="btn-start btn-menu" id="btnMenu">
+                  <div class="btn-bg"></div>
+                  <span class="btn-text">MENU</span>
+                  <span class="btn-arrow">⌂</span>
                   <div class="btn-shine"></div>
                 </button>
               </div>
@@ -292,13 +323,35 @@
           <div class="screen hidden" id="pauseScreen">
             <div class="screen-inner pause-inner">
               <p class="screen-title pause-title">PAUSED</p>
-              <div class="pause-hint">Press <kbd>P</kbd> or tap to resume</div>
-              <button class="btn-start btn-resume" onclick="resumeGame()">
-                <div class="btn-bg"></div>
-                <span class="btn-text">RESUME</span>
-                <span class="btn-arrow">▶</span>
-                <div class="btn-shine"></div>
-              </button>
+              <div class="pause-stats">
+                <div class="pause-stat">
+                  <span>SCORE</span>
+                  <strong id="pauseScore">0</strong>
+                </div>
+                <div class="pause-stat">
+                  <span>ZONE</span>
+                  <strong id="pauseZone">1</strong>
+                </div>
+                <div class="pause-stat">
+                  <span>COMBO</span>
+                  <strong id="pauseCombo">x0</strong>
+                </div>
+              </div>
+              <div class="pause-hint">Press <kbd>P</kbd> or tap RESUME</div>
+              <div class="pause-btn-row">
+                <button class="btn-start btn-resume" id="btnResume">
+                  <div class="btn-bg"></div>
+                  <span class="btn-text">RESUME</span>
+                  <span class="btn-arrow">▶</span>
+                  <div class="btn-shine"></div>
+                </button>
+                <button class="btn-start btn-quit" id="btnQuit">
+                  <div class="btn-bg"></div>
+                  <span class="btn-text">QUIT</span>
+                  <span class="btn-arrow">✕</span>
+                  <div class="btn-shine"></div>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -319,33 +372,33 @@
           <div class="speed-lines" id="speedLines"></div>
           <div class="nitro-lines" id="nitroLines"></div>
 
-          <div class="pause-btn" id="pauseBtn" onclick="togglePause()">⏸</div>
+          <div class="pause-btn" id="pauseBtn">⏸</div>
           <div class="score-multiplier hidden" id="scoreMultiplier">x1</div>
 
         </div>
       </div>
 
       <div class="mobile-controls">
-        <button class="tap-btn tap-left" id="tapLeft" ontouchstart="tapLane(-2)" onmousedown="tapLane(-2)">
+        <button class="tap-btn tap-left" id="tapLeft">
           <div class="tap-glow"></div>
           <span>◀◀</span>
         </button>
-        <button class="tap-btn tap-left-one" id="tapLeftOne" ontouchstart="tapLane(-1)" onmousedown="tapLane(-1)">
+        <button class="tap-btn tap-left-one" id="tapLeftOne">
           <div class="tap-glow"></div>
           <span>◀</span>
         </button>
         <div class="mid-display">
-          <button class="nitro-btn" id="nitroBtn" ontouchstart="activateNitro()" onmousedown="activateNitro()">
+          <button class="nitro-btn" id="nitroBtn">
             <div class="nitro-btn-glow"></div>
             <span>💨</span>
             <span class="nitro-btn-label">NITRO</span>
           </button>
         </div>
-        <button class="tap-btn tap-right-one" id="tapRightOne" ontouchstart="tapLane(1)" onmousedown="tapLane(1)">
+        <button class="tap-btn tap-right-one" id="tapRightOne">
           <div class="tap-glow"></div>
           <span>▶</span>
         </button>
-        <button class="tap-btn tap-right" id="tapRight" ontouchstart="tapLane(2)" onmousedown="tapLane(2)">
+        <button class="tap-btn tap-right" id="tapRight">
           <div class="tap-glow"></div>
           <span>▶▶</span>
         </button>
@@ -369,6 +422,7 @@
 
   </div>
 
+  <script src="storage.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
