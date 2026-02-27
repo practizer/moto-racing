@@ -36,7 +36,7 @@
         </div>
         <div class="logo-badge">
           <span class="badge-dot"></span>
-          v7.0
+          v8.0
         </div>
       </div>
     </header>
@@ -103,6 +103,20 @@
           <div class="bar-fill fever-fill" id="feverFill"></div>
         </div>
       </div>
+      <div class="slipstream-wrap" id="slipstreamWrap" style="opacity:0.25">
+        <span class="bar-tag slip-tag">💨SLIP</span>
+        <div class="bar-track slip-track">
+          <div class="bar-fill slip-fill" id="slipstreamBar"></div>
+        </div>
+        <span class="slip-label" id="slipstreamDisplay"></span>
+      </div>
+      <div class="heat-wrap" id="heatWrap" style="opacity:0.3">
+        <span class="bar-tag heat-tag">🔴HEAT</span>
+        <div class="bar-track heat-track">
+          <div class="bar-fill heat-fill" id="heatFill"></div>
+        </div>
+        <span class="heat-label" id="heatDisplay">0</span>
+      </div>
       <div class="nitro-wrap" id="nitroWrap">
         <span class="bar-tag nitro-tag">⚡NITRO</span>
         <div class="bar-track nitro-track">
@@ -130,6 +144,7 @@
         <div id="game">
           <canvas id="roadCanvas" width="420" height="540"></canvas>
           <div id="markerLayer"></div>
+          <div id="hazardLayer"></div>
           <div id="obstaclesLayer"></div>
           <div id="powerupLayer"></div>
           <div id="coinLayer"></div>
@@ -137,6 +152,9 @@
           <div id="floatingTextLayer"></div>
           <div id="trailLayer"></div>
           <div id="lightBeamLayer"></div>
+          <div id="ghostLayer"></div>
+          <div id="bossLayer"></div>
+          <div id="weatherOverlay" class="weather-overlay"></div>
           <canvas id="effectCanvas" width="420" height="540"></canvas>
 
           <div class="bike" id="bike">
@@ -196,9 +214,12 @@
                 <div class="feat-item"><span class="feat-icon">🔥</span><span>Fever</span></div>
                 <div class="feat-item"><span class="feat-icon">🪙</span><span>Coins</span></div>
                 <div class="feat-item"><span class="feat-icon">🌊</span><span>8 Zones</span></div>
-                <div class="feat-item"><span class="feat-icon">🛣️</span><span>6 Lanes</span></div>
-                <div class="feat-item"><span class="feat-icon">💨</span><span>Nitro</span></div>
-                <div class="feat-item"><span class="feat-icon">👻</span><span>Ghost</span></div>
+                <div class="feat-item"><span class="feat-icon">💨</span><span>Slipstream</span></div>
+                <div class="feat-item"><span class="feat-icon">🔴</span><span>Overclock</span></div>
+                <div class="feat-item"><span class="feat-icon">💀</span><span>Boss Fights</span></div>
+                <div class="feat-item"><span class="feat-icon">🛢</span><span>Hazards</span></div>
+                <div class="feat-item"><span class="feat-icon">👻</span><span>Rival Ghost</span></div>
+                <div class="feat-item"><span class="feat-icon">🌧</span><span>Weather</span></div>
               </div>
 
               <div class="stats-panel">
@@ -245,6 +266,9 @@
                   <span class="or-text">DOUBLE DRIFT</span>
                   <kbd>P</kbd>
                   <span class="or-text">PAUSE</span>
+                </div>
+                <div class="key-row" style="margin-top:4px;font-size:8px;color:rgba(255,255,255,0.18);">
+                  SLIPSTREAM: tail an obstacle close · OVERCLOCK: fill HEAT bar · BOSS: ram it in its lane
                 </div>
               </div>
             </div>
@@ -296,6 +320,7 @@
                 <div class="record-row hidden" id="recBest">🏆 NEW BEST SCORE!</div>
                 <div class="record-row hidden" id="recCombo">🎯 NEW BEST COMBO!</div>
                 <div class="record-row hidden" id="recDrift">🌀 NEW BEST DRIFT!</div>
+                <div class="record-row hidden" id="recSlip">💨 NEW SLIPSTREAM RECORD!</div>
               </div>
 
               <div class="leaderboard-mini" id="leaderboardMini">
@@ -363,6 +388,10 @@
             </div>
           </div>
 
+          <div class="boss-announce hidden" id="bossAnnounce">
+            <span class="boss-skull">💀</span> BOSS INCOMING!
+          </div>
+
           <div class="nitro-announce hidden" id="nitroAnnounce">💨 NITRO!</div>
           <div class="drift-announce hidden" id="driftAnnounce">🌀 DRIFT!</div>
           <div class="ghost-announce hidden" id="ghostAnnounce">👻 GHOST MODE!</div>
@@ -411,13 +440,13 @@
       <span class="sep">·</span>
       <span>COMBO x5 = +2 BONUS</span>
       <span class="sep">·</span>
-      <span>🛡️⚡💜🧲💣👻 POWER-UPS</span>
+      <span>SLIPSTREAM = SPEED BURST</span>
       <span class="sep">·</span>
-      <span>HOLD SPACE = NITRO</span>
+      <span>HEAT → OVERCLOCK</span>
       <span class="sep">·</span>
-      <span>P = PAUSE</span>
+      <span>BOSS: RAM IT</span>
       <span class="sep">·</span>
-      <span>6 LANES · 8 ZONES</span>
+      <span>6 LANES · 8 ZONES · RIVAL GHOST</span>
     </footer>
 
   </div>
