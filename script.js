@@ -10,6 +10,7 @@ const goScoreEl         = document.getElementById('goScore');
 const goBestEl          = document.getElementById('goBest');
 const goComboEl         = document.getElementById('goCombo');
 const goCoinsEl         = document.getElementById('goCoins');
+const goDriftEl         = document.getElementById('goDrift');
 const goZoneEl          = document.getElementById('goZone');
 const newBestMsg        = document.getElementById('newBestMsg');
 const obstaclesLayer    = document.getElementById('obstaclesLayer');
@@ -27,6 +28,10 @@ const comboFill         = document.getElementById('comboFill');
 const comboCount        = document.getElementById('comboCount');
 const feverWrap         = document.getElementById('feverWrap');
 const feverFill         = document.getElementById('feverFill');
+const nitroFill         = document.getElementById('nitroFill');
+const nitroMini         = document.getElementById('nitroMini');
+const nitroLabel        = document.getElementById('nitroLabel');
+const nitroWrap         = document.getElementById('nitroWrap');
 const coinCountEl       = document.getElementById('coinCount');
 const zoneAnnounce      = document.getElementById('zoneAnnounce');
 const zoneNumber        = document.getElementById('zoneNumber');
@@ -36,21 +41,30 @@ const rainCanvas        = document.getElementById('rainCanvas');
 const roadCanvas        = document.getElementById('roadCanvas');
 const damageFlash       = document.getElementById('damageFlash');
 const speedLines        = document.getElementById('speedLines');
+const nitroLines        = document.getElementById('nitroLines');
+const nitroAnnounce     = document.getElementById('nitroAnnounce');
+const driftAnnounce     = document.getElementById('driftAnnounce');
 
-const GAME_W        = 300;
-const GAME_H        = 510;
-const LANES         = [28, 130, 232];
+const GAME_W        = 420;
+const GAME_H        = 540;
+const NUM_LANES     = 6;
+const LANE_W        = GAME_W / NUM_LANES;
+const LANES         = Array.from({length: NUM_LANES}, (_, i) => Math.round(i * LANE_W + (LANE_W / 2) - 20));
 const BIKE_W        = 40;
 const BIKE_H        = 72;
 const OBS_W         = 40;
 const OBS_H         = 68;
 const BASE_SPD      = 4;
-const MAX_OBS       = 2;
+const MAX_OBS       = 4;
 const MAX_LIVES     = 3;
 const COMBO_MAX     = 10;
 const INVULN_MS     = 1400;
 const FEVER_MAX     = 20;
 const FEVER_DRAIN   = 0.014;
+const NITRO_MAX     = 100;
+const NITRO_DRAIN   = 1.1;
+const NITRO_CHARGE  = 0.35;
+const NITRO_MIN_USE = 25;
 
 const ZONE_THEMES = [
   { name: 'CITY',     color: '#00e5ff', bg: '#0a0c12', road1: '#0a0c12', road2: '#0d1020', curb1: '#cc2000', curb2: '#ddd' },
@@ -62,11 +76,12 @@ const ZONE_THEMES = [
 ];
 
 const POWERUP_TYPES = [
-  { type: 'shield', icon: '🛡️', chance: 0.28 },
-  { type: 'boost',  icon: '⚡',  chance: 0.25 },
-  { type: 'life',   icon: '💜', chance: 0.20 },
-  { type: 'magnet', icon: '🧲', chance: 0.15 },
+  { type: 'shield', icon: '🛡️', chance: 0.26 },
+  { type: 'boost',  icon: '⚡',  chance: 0.22 },
+  { type: 'life',   icon: '💜', chance: 0.18 },
+  { type: 'magnet', icon: '🧲', chance: 0.14 },
   { type: 'nuke',   icon: '💣', chance: 0.12 },
+  { type: 'nitropack', icon: '💨', chance: 0.08 },
 ];
 
 const OBS_PALETTES = [
@@ -80,7 +95,7 @@ const OBS_PALETTES = [
   { body: '#00ffcc', tint: '#88ffee', dark: '#001a12' },
 ];
 
-let currentLane      = 1;
+let currentLane      = 2;
 let gameRunning      = false;
 let score            = 0;
 let bestScore        = parseInt(localStorage.getItem('motorush_best') || '0');
@@ -93,8 +108,8 @@ let spawnTimer       = 0;
 let powerupTimer     = 0;
 let coinTimer        = 0;
 let spawnInterval    = 90;
-let powerupInterval  = 220;
-let coinInterval     = 55;
+let powerupInterval  = 200;
+let coinInterval     = 50;
 let leanTimer        = null;
 let lives            = MAX_LIVES;
 let shieldActive     = false;
@@ -120,6 +135,15 @@ let screenShakeActive = false;
 let bgCtx            = null;
 let logoCtx          = null;
 let logoAngle        = 0;
+let nitroCharge      = 0;
+let nitroActive      = false;
+let nitroTimer       = null;
+let nitroKeyHeld     = false;
+let driftCount       = 0;
+let lastLane         = 2;
+let driftCombo       = 0;
+let driftTimer       = null;
+let laneHistory      = [];
 
 function initBgCanvas() {
   const bgCanvas = document.getElementById('bgCanvas');
@@ -132,8 +156,7 @@ function initBgCanvas() {
 function drawBgParticles() {
   if (!bgCtx) return;
   bgCtx.clearRect(0, 0, bgCtx.canvas.width, bgCtx.canvas.height);
-  const particles = 60;
-  for (let i = 0; i < particles; i++) {
+  for (let i = 0; i < 60; i++) {
     const x = Math.random() * bgCtx.canvas.width;
     const y = Math.random() * bgCtx.canvas.height;
     const r = Math.random() * 1.5;
@@ -222,16 +245,17 @@ function drawRoad() {
   ctx.fillStyle = fogBot;
   ctx.fillRect(0, h - 50, w, 50);
 
-  const laneLineColor = `rgba(255,255,255,0.06)`;
-  ctx.strokeStyle = laneLineColor;
+  ctx.strokeStyle = 'rgba(255,255,255,0.055)';
   ctx.setLineDash([22, 22]);
   ctx.lineDashOffset = -roadOffset;
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(100, 0); ctx.lineTo(100, h); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(200, 0); ctx.lineTo(200, h); ctx.stroke();
+  ctx.lineWidth = 1.5;
+  for (let i = 1; i < NUM_LANES; i++) {
+    const x = i * LANE_W;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
   ctx.setLineDash([]);
 
-  const curbW = 10;
+  const curbW = 8;
   const dashH = 14;
   const curbOffset = roadOffset % (dashH * 2);
   for (let y = -dashH * 2 + curbOffset; y < h + dashH; y += dashH * 2) {
@@ -246,22 +270,29 @@ function drawRoad() {
   }
 
   const zoneColor = theme.color;
-  const hex = zoneColor;
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
+  const r = parseInt(zoneColor.slice(1,3),16);
+  const g = parseInt(zoneColor.slice(3,5),16);
+  const b = parseInt(zoneColor.slice(5,7),16);
 
-  const sideGlow = ctx.createLinearGradient(0, 0, 50, 0);
-  sideGlow.addColorStop(0, `rgba(${r},${g},${b},0.06)`);
+  const sideGlow = ctx.createLinearGradient(0, 0, 40, 0);
+  sideGlow.addColorStop(0, `rgba(${r},${g},${b},0.08)`);
   sideGlow.addColorStop(1, 'transparent');
   ctx.fillStyle = sideGlow;
-  ctx.fillRect(0, 0, 50, h);
+  ctx.fillRect(0, 0, 40, h);
 
-  const sideGlowR = ctx.createLinearGradient(w - 50, 0, w, 0);
+  const sideGlowR = ctx.createLinearGradient(w - 40, 0, w, 0);
   sideGlowR.addColorStop(0, 'transparent');
-  sideGlowR.addColorStop(1, `rgba(${r},${g},${b},0.06)`);
+  sideGlowR.addColorStop(1, `rgba(${r},${g},${b},0.08)`);
   ctx.fillStyle = sideGlowR;
-  ctx.fillRect(w - 50, 0, 50, h);
+  ctx.fillRect(w - 40, 0, 40, h);
+
+  if (nitroActive) {
+    const nitroGrad = ctx.createLinearGradient(0, h * 0.3, 0, h);
+    nitroGrad.addColorStop(0, 'transparent');
+    nitroGrad.addColorStop(1, 'rgba(0,229,255,0.06)');
+    ctx.fillStyle = nitroGrad;
+    ctx.fillRect(0, 0, w, h);
+  }
 }
 
 function initRain() {
@@ -269,7 +300,7 @@ function initRain() {
   rainCanvas.height = window.innerHeight;
   rainCanvas.style.cssText = 'position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity 0.5s;';
   rainCtx = rainCanvas.getContext('2d');
-  for (let i = 0; i < 160; i++) {
+  for (let i = 0; i < 200; i++) {
     rainDrops.push({
       x:   Math.random() * window.innerWidth,
       y:   Math.random() * window.innerHeight,
@@ -321,23 +352,28 @@ function makeObstacleSVG(p) {
 }
 
 function spawnObstacle() {
-  const occupied = obstacles.filter(o => o.top < 130).map(o => o.lane);
-  const free = [0,1,2].filter(l => !occupied.includes(l));
+  const occupied = obstacles.filter(o => o.top < 140).map(o => o.lane);
+  const free = Array.from({length: NUM_LANES}, (_, i) => i).filter(l => !occupied.includes(l));
   if (!free.length) return;
 
-  const lane    = free[Math.floor(Math.random() * free.length)];
-  const palette = OBS_PALETTES[Math.floor(Math.random() * OBS_PALETTES.length)];
-  const el      = document.createElement('div');
-  el.className  = 'obstacle';
-  el.innerHTML  = makeObstacleSVG(palette);
-  el.style.left = LANES[lane] + 'px';
-  el.style.top  = -OBS_H + 'px';
+  const numToSpawn = Math.random() < 0.22 ? Math.min(2, free.length) : 1;
+  const shuffled = free.sort(() => Math.random() - 0.5);
 
-  const zColor = (ZONE_THEMES[zone - 1] || ZONE_THEMES[0]).color;
-  el.style.filter = `drop-shadow(0 0 8px ${zColor}88)`;
+  for (let s = 0; s < numToSpawn; s++) {
+    const lane    = shuffled[s];
+    const palette = OBS_PALETTES[Math.floor(Math.random() * OBS_PALETTES.length)];
+    const el      = document.createElement('div');
+    el.className  = 'obstacle';
+    el.innerHTML  = makeObstacleSVG(palette);
+    el.style.left = LANES[lane] + 'px';
+    el.style.top  = -OBS_H + 'px';
 
-  obstaclesLayer.appendChild(el);
-  obstacles.push({ el, top: -OBS_H, lane });
+    const zColor = (ZONE_THEMES[zone - 1] || ZONE_THEMES[0]).color;
+    el.style.filter = `drop-shadow(0 0 8px ${zColor}88)`;
+
+    obstaclesLayer.appendChild(el);
+    obstacles.push({ el, top: -OBS_H, lane });
+  }
 }
 
 function spawnPowerup() {
@@ -349,7 +385,7 @@ function spawnPowerup() {
     if (roll < cum) { chosen = p; break; }
   }
   if (chosen.type === 'life' && lives >= MAX_LIVES) return;
-  const lane = Math.floor(Math.random() * 3);
+  const lane = Math.floor(Math.random() * NUM_LANES);
   const el   = document.createElement('div');
   el.className = `powerup ${chosen.type}`;
   el.textContent = chosen.icon;
@@ -360,40 +396,51 @@ function spawnPowerup() {
 }
 
 function spawnCoin() {
-  const lane = Math.floor(Math.random() * 3);
-  const el   = document.createElement('div');
-  el.className   = 'coin';
-  el.textContent = '🪙';
-  el.style.left  = (LANES[lane] + (OBS_W - 26) / 2) + 'px';
-  el.style.top   = -28 + 'px';
-  coinLayer.appendChild(el);
-  coins.push({ el, top: -28, lane });
+  const count = Math.random() < 0.3 ? 2 : 1;
+  const usedLanes = [];
+  for (let i = 0; i < count; i++) {
+    let lane;
+    do { lane = Math.floor(Math.random() * NUM_LANES); } while (usedLanes.includes(lane));
+    usedLanes.push(lane);
+    const el   = document.createElement('div');
+    el.className   = 'coin';
+    el.textContent = '🪙';
+    el.style.left  = (LANES[lane] + (OBS_W - 26) / 2) + 'px';
+    el.style.top   = -28 + 'px';
+    coinLayer.appendChild(el);
+    coins.push({ el, top: -28, lane });
+  }
 }
 
 function spawnTrail() {
   const x = LANES[currentLane] + BIKE_W / 2;
   const y = GAME_H - 22;
+  const nitroColors = ['#00e5ff','#66eeff','#ffffff','#aaeeff'];
   const feverColors = ['#ff4500','#ff7700','#ffd700','#ff2200'];
   const normalColors = ['rgba(0,229,255,0.5)', 'rgba(255,69,0,0.35)', 'rgba(255,215,0,0.25)'];
-  const colors = feverActive ? feverColors : normalColors;
-  const count = feverActive ? 4 : 2;
+  let colors, count;
+  if (nitroActive) { colors = nitroColors; count = 6; }
+  else if (feverActive) { colors = feverColors; count = 4; }
+  else { colors = normalColors; count = 2; }
+
   for (let i = 0; i < count; i++) {
     const t = document.createElement('div');
     t.className = 'trail-dot';
-    const size = feverActive ? 6 + Math.random() * 5 : 4 + Math.random() * 3;
+    const size = nitroActive ? 7 + Math.random() * 6 : feverActive ? 6 + Math.random() * 5 : 4 + Math.random() * 3;
     t.style.width    = size + 'px';
     t.style.height   = size + 'px';
-    t.style.left     = (x + (Math.random() - 0.5) * 14) + 'px';
+    t.style.left     = (x + (Math.random() - 0.5) * 18) + 'px';
     t.style.top      = y + 'px';
     t.style.background = colors[Math.floor(Math.random() * colors.length)];
-    if (feverActive) t.style.boxShadow = `0 0 8px ${feverColors[0]}`;
+    if (nitroActive) t.style.boxShadow = `0 0 10px #00e5ff, 0 0 20px #00e5ff66`;
+    else if (feverActive) t.style.boxShadow = `0 0 8px ${feverColors[0]}`;
     trailLayer.appendChild(t);
-    setTimeout(() => t.remove(), 400);
+    setTimeout(() => t.remove(), nitroActive ? 600 : 400);
   }
 }
 
 function updateObstacles() {
-  const moveSpd = feverActive ? speed * 1.55 : speed;
+  const moveSpd = nitroActive ? speed * 1.8 : feverActive ? speed * 1.55 : speed;
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const obs = obstacles[i];
     obs.top += moveSpd;
@@ -402,6 +449,13 @@ function updateObstacles() {
       obs.el.remove(); obstacles.splice(i, 1); addScore(obs); continue;
     }
     if (!invulnerable && checkCollision(obs, OBS_W, OBS_H)) {
+      if (nitroActive) {
+        obs.el.remove(); obstacles.splice(i, 1);
+        score++; scoreEl.textContent = score;
+        spawnCrashParticles(LANES[obs.lane] + OBS_W / 2, obs.top + OBS_H / 2, ['#00e5ff','#66eeff','#fff']);
+        spawnFloatingText(obs.lane, '💨 NITRO SMASH!', '#00e5ff');
+        continue;
+      }
       handleCrash(obs); return;
     }
   }
@@ -427,8 +481,8 @@ function updateCoins() {
       const coinCenter = LANES[c.lane] + 13;
       const bikeCenter = LANES[currentLane] + BIKE_W / 2;
       const dist = Math.abs(coinCenter - bikeCenter);
-      if (dist < 115) {
-        const pull = (1 - dist / 115) * 9;
+      if (dist < 150) {
+        const pull = (1 - dist / 150) * 10;
         const dir  = bikeCenter > coinCenter ? 1 : -1;
         c.magnetX  = (c.magnetX || 0) + dir * pull;
         c.el.style.left = (LANES[c.lane] + (OBS_W - 26) / 2 + c.magnetX) + 'px';
@@ -449,12 +503,16 @@ function updateCoins() {
 
 function collectCoin(c, idx) {
   c.el.remove(); coins.splice(idx, 1);
-  const bonus = feverActive ? 3 : 1;
+  const bonus = nitroActive ? 4 : feverActive ? 3 : 1;
   sessionCoins += bonus; totalCoins += bonus;
   coinCountEl.textContent = sessionCoins;
   popEl(coinCountEl.parentElement);
-  spawnFloatingText(c.lane, feverActive ? `🪙x${bonus} FEVER!` : '🪙+1', '#ffd700');
+  const label = nitroActive ? `🪙x${bonus} NITRO!` : feverActive ? `🪙x${bonus} FEVER!` : '🪙+1';
+  const color = nitroActive ? '#00e5ff' : '#ffd700';
+  spawnFloatingText(c.lane, label, color);
   spawnCoinBurst(LANES[c.lane] + 13, c.top);
+  nitroCharge = Math.min(nitroCharge + 2, NITRO_MAX);
+  updateNitroBar();
 }
 
 function spawnCoinBurst(x, y) {
@@ -475,6 +533,75 @@ function spawnCoinBurst(x, y) {
   }
 }
 
+function updateNitroBar() {
+  const pct = (nitroCharge / NITRO_MAX) * 100;
+  nitroFill.style.width = pct + '%';
+  nitroMini.style.width = pct + '%';
+  if (nitroActive) {
+    nitroLabel.textContent = 'ACTIVE';
+    nitroWrap.classList.add('active');
+  } else if (nitroCharge >= NITRO_MIN_USE) {
+    nitroLabel.textContent = 'READY';
+    nitroWrap.classList.add('charged');
+    nitroWrap.classList.remove('active');
+  } else {
+    nitroLabel.textContent = Math.floor(pct) + '%';
+    nitroWrap.classList.remove('active', 'charged');
+  }
+}
+
+function activateNitro() {
+  if (!gameRunning) return;
+  if (nitroCharge < NITRO_MIN_USE) return;
+  if (nitroActive) return;
+  nitroActive = true;
+  nitroKeyHeld = true;
+  nitroLines.classList.add('active');
+  bikeEl.style.filter = 'drop-shadow(0 0 18px #00e5ff) drop-shadow(0 0 35px #00e5ff88) drop-shadow(0 0 60px rgba(0,229,255,0.4))';
+  nitroAnnounce.classList.remove('hidden');
+  nitroAnnounce.classList.add('nitro-pop');
+  setTimeout(() => { nitroAnnounce.classList.add('hidden'); nitroAnnounce.classList.remove('nitro-pop'); }, 900);
+  flashDamage('rgba(0,229,255,0.12)');
+  updateNitroBar();
+}
+
+function deactivateNitro() {
+  nitroActive = false;
+  nitroKeyHeld = false;
+  nitroLines.classList.remove('active');
+  if (!feverActive) bikeEl.style.filter = '';
+  else bikeEl.style.filter = 'drop-shadow(0 0 20px #ff4500) drop-shadow(0 0 40px #ffd700) drop-shadow(0 0 70px rgba(255,69,0,0.5))';
+  updateNitroBar();
+}
+
+function updateNitro() {
+  if (nitroActive) {
+    nitroCharge -= NITRO_DRAIN;
+    if (nitroCharge <= 0) { nitroCharge = 0; deactivateNitro(); }
+  } else {
+    nitroCharge = Math.min(nitroCharge + NITRO_CHARGE, NITRO_MAX);
+  }
+  updateNitroBar();
+}
+
+function checkDrift() {
+  const laneDiff = Math.abs(currentLane - lastLane);
+  if (laneDiff >= 2) {
+    driftCount++;
+    driftCombo++;
+    clearTimeout(driftTimer);
+    driftTimer = setTimeout(() => { driftCombo = 0; }, 2500);
+    const bonus = driftCombo >= 3 ? 3 : driftCombo >= 2 ? 2 : 1;
+    score += bonus; scoreEl.textContent = score;
+    nitroCharge = Math.min(nitroCharge + 8, NITRO_MAX);
+    updateNitroBar();
+    spawnFloatingText(currentLane, driftCombo >= 3 ? `🌀 ULTRA DRIFT! +${bonus}` : driftCombo >= 2 ? `🌀 DRIFT x${driftCombo}! +${bonus}` : '🌀 DRIFT! +1', '#bf5fff');
+    driftAnnounce.classList.remove('hidden');
+    driftAnnounce.classList.add('drift-pop');
+    setTimeout(() => { driftAnnounce.classList.add('hidden'); driftAnnounce.classList.remove('drift-pop'); }, 700);
+  }
+}
+
 function updateFever() {
   if (!feverActive) return;
   feverCombo -= FEVER_DRAIN;
@@ -488,7 +615,7 @@ function activateFever() {
   feverWrap.classList.remove('hidden');
   gameEl.classList.add('fever-mode');
   speedLines.classList.add('active');
-  bikeEl.style.filter = 'drop-shadow(0 0 20px #ff4500) drop-shadow(0 0 40px #ffd700) drop-shadow(0 0 70px rgba(255,69,0,0.5))';
+  if (!nitroActive) bikeEl.style.filter = 'drop-shadow(0 0 20px #ff4500) drop-shadow(0 0 40px #ffd700) drop-shadow(0 0 70px rgba(255,69,0,0.5))';
   spawnFloatingText(currentLane, '🔥 FEVER MODE!', '#ff4500');
   flashDamage('rgba(255,150,0,0.15)');
 }
@@ -498,7 +625,7 @@ function deactivateFever() {
   feverWrap.classList.add('hidden');
   gameEl.classList.remove('fever-mode');
   speedLines.classList.remove('active');
-  bikeEl.style.filter = '';
+  if (!nitroActive) bikeEl.style.filter = '';
   combo = 0; updateComboBar();
 }
 
@@ -519,6 +646,7 @@ function addScore(obs) {
   score++;
   combo++;
   feverCombo = Math.min(feverCombo + 1, FEVER_MAX);
+  nitroCharge = Math.min(nitroCharge + NITRO_CHARGE, NITRO_MAX);
   if (combo > bestCombo) bestCombo = combo;
   scoreEl.textContent = score;
   popEl(scoreEl);
@@ -538,20 +666,22 @@ function addScore(obs) {
     score += 2; scoreEl.textContent = score;
     spawnFloatingText(obs.lane, `COMBO x${combo}! +2`, '#ffd700');
     flashDamage('rgba(255,215,0,0.08)');
+    nitroCharge = Math.min(nitroCharge + 10, NITRO_MAX);
   }
 
   const newZone = Math.min(Math.floor(score / 20) + 1, ZONE_THEMES.length);
   if (newZone !== zone) { zone = newZone; triggerZoneChange(); }
 
   if (score % 5 === 0) {
-    speed = Math.min(BASE_SPD + Math.floor(score / 5) * 1.1, 18);
-    spawnInterval = Math.max(38, 90 - score * 1.8);
+    speed = Math.min(BASE_SPD + Math.floor(score / 5) * 1.0, 17);
+    spawnInterval = Math.max(40, 90 - score * 1.5);
     speedEl.textContent = (speed / BASE_SPD).toFixed(1) + 'x';
     popEl(speedEl);
     gameEl.classList.remove('speed-burst');
     void gameEl.offsetWidth;
     gameEl.classList.add('speed-burst');
   }
+  updateNitroBar();
 }
 
 function triggerZoneChange() {
@@ -595,21 +725,29 @@ function collectPowerup(pu, idx) {
   pu.el.remove(); powerups.splice(idx, 1);
   spawnCollectBurst(LANES[pu.lane] + OBS_W / 2, pu.top + 17, pu.type);
   switch (pu.type) {
-    case 'shield': activateShield(); spawnFloatingText(pu.lane, '🛡️ SHIELD!', '#00e5ff'); break;
-    case 'boost':  activateBoost();  spawnFloatingText(pu.lane, '⚡ BOOST!',  '#ffd700'); break;
-    case 'life':   gainLife();       spawnFloatingText(pu.lane, '💜 +1 LIFE', '#ff80aa'); break;
-    case 'magnet': activateMagnet(); spawnFloatingText(pu.lane, '🧲 MAGNET!', '#bf5fff'); break;
-    case 'nuke':   activateNuke();   spawnFloatingText(pu.lane, '💣 NUKE!',   '#ff4500'); break;
+    case 'shield':    activateShield();   spawnFloatingText(pu.lane, '🛡️ SHIELD!',   '#00e5ff'); break;
+    case 'boost':     activateBoost();    spawnFloatingText(pu.lane, '⚡ BOOST!',     '#ffd700'); break;
+    case 'life':      gainLife();         spawnFloatingText(pu.lane, '💜 +1 LIFE',   '#ff80aa'); break;
+    case 'magnet':    activateMagnet();   spawnFloatingText(pu.lane, '🧲 MAGNET!',   '#bf5fff'); break;
+    case 'nuke':      activateNuke();     spawnFloatingText(pu.lane, '💣 NUKE!',     '#ff4500'); break;
+    case 'nitropack': collectNitroPack(); spawnFloatingText(pu.lane, '💨 NITRO +50!','#00e5ff'); break;
   }
+}
+
+function collectNitroPack() {
+  nitroCharge = Math.min(nitroCharge + 50, NITRO_MAX);
+  updateNitroBar();
+  flashDamage('rgba(0,229,255,0.1)');
 }
 
 function spawnCollectBurst(x, y, type) {
   const colorMap = {
-    shield: ['#00e5ff','#66eeff','#ffffff'],
-    boost:  ['#ffd700','#ffaa00','#fff8aa'],
-    life:   ['#ff80aa','#ff3399','#ff80ff'],
-    magnet: ['#bf5fff','#9933ff','#ddaaff'],
-    nuke:   ['#ff4500','#ff7700','#ffd700'],
+    shield:    ['#00e5ff','#66eeff','#ffffff'],
+    boost:     ['#ffd700','#ffaa00','#fff8aa'],
+    life:      ['#ff80aa','#ff3399','#ff80ff'],
+    magnet:    ['#bf5fff','#9933ff','#ddaaff'],
+    nuke:      ['#ff4500','#ff7700','#ffd700'],
+    nitropack: ['#00e5ff','#ffffff','#aaeeff'],
   };
   const colors = colorMap[type] || ['#ffffff'];
   for (let i = 0; i < 14; i++) {
@@ -704,6 +842,9 @@ function handleCrash(obs) {
   flashDamage('rgba(255,0,0,0.35)');
   triggerScreenShake();
   resetCombo();
+  nitroCharge = Math.max(0, nitroCharge - 20);
+  if (nitroActive) deactivateNitro();
+  updateNitroBar();
   if (lives <= 0) {
     triggerGameOver();
   } else {
@@ -750,7 +891,8 @@ function spawnScoreRing(obs) {
   const y = GAME_H - 80;
   ring.style.left = x + 'px'; ring.style.top = y + 'px';
   ring.style.transform = 'translate(-50%, -50%)';
-  if (feverActive) ring.style.borderColor = '#ffd700';
+  if (nitroActive) ring.style.borderColor = '#00e5ff';
+  else if (feverActive) ring.style.borderColor = '#ffd700';
   particleLayer.appendChild(ring);
   setTimeout(() => ring.remove(), 560);
 }
@@ -807,7 +949,8 @@ function updateMarkers() {
 function gameLoop() {
   if (!gameRunning) return;
 
-  roadOffset += feverActive ? speed * 1.55 : speed;
+  const effectiveSpeed = nitroActive ? speed * 1.8 : feverActive ? speed * 1.55 : speed;
+  roadOffset += effectiveSpeed;
   drawRoad();
 
   spawnTimer++;
@@ -823,6 +966,7 @@ function gameLoop() {
   updatePowerups();
   updateCoins();
   updateFever();
+  updateNitro();
   updateMarkers();
   syncShieldPosition();
   syncMagnetPosition();
@@ -834,7 +978,7 @@ function gameLoop() {
 function moveLane(dir) {
   if (!gameRunning) return;
   const next = currentLane + dir;
-  if (next < 0 || next > 2) {
+  if (next < 0 || next > NUM_LANES - 1) {
     bikeEl.classList.remove('lean-left', 'lean-right');
     void bikeEl.offsetWidth;
     bikeEl.classList.add(dir < 0 ? 'lean-left' : 'lean-right');
@@ -842,6 +986,7 @@ function moveLane(dir) {
     leanTimer = setTimeout(() => bikeEl.classList.remove('lean-left', 'lean-right'), 100);
     return;
   }
+  lastLane = currentLane;
   currentLane = next;
   bikeEl.style.left = LANES[currentLane] + 'px';
   bikeEl.classList.remove('lean-left', 'lean-right');
@@ -849,6 +994,7 @@ function moveLane(dir) {
   bikeEl.classList.add(dir < 0 ? 'lean-left' : 'lean-right');
   clearTimeout(leanTimer);
   leanTimer = setTimeout(() => bikeEl.classList.remove('lean-left', 'lean-right'), 175);
+  checkDrift();
 }
 
 function tapLane(dir) { moveLane(dir); }
@@ -868,11 +1014,13 @@ function startGame() {
   obstacles = []; powerups = []; coins = [];
   score = 0; speed = BASE_SPD;
   spawnTimer = 0; powerupTimer = 0; coinTimer = 0;
-  spawnInterval = 90; currentLane = 1; lives = MAX_LIVES;
+  spawnInterval = 90; currentLane = 2; lives = MAX_LIVES;
   combo = 0; bestCombo = 0; zone = 1;
   feverCombo = 0; feverActive = false;
   shieldActive = false; magnetActive = false; invulnerable = false;
   markerY = -40; sessionCoins = 0; trailTickCount = 0; roadOffset = 0;
+  nitroCharge = 0; nitroActive = false; driftCount = 0; driftCombo = 0;
+  lastLane = 2;
 
   bikeEl.style.opacity = '1';
   bikeEl.style.filter  = '';
@@ -880,6 +1028,7 @@ function startGame() {
   gameEl.style.background = ZONE_THEMES[0].bg;
   gameEl.classList.remove('fever-mode');
   speedLines.classList.remove('active');
+  nitroLines.classList.remove('active');
   shieldBubble.classList.add('hidden');
   magnetField.classList.add('hidden');
   feverWrap.classList.add('hidden');
@@ -895,11 +1044,12 @@ function startGame() {
   speedEl.textContent     = '1.0x';
   zoneEl.textContent      = '1';
   coinCountEl.textContent = '0';
-  bikeEl.style.left       = LANES[1] + 'px';
+  bikeEl.style.left       = LANES[2] + 'px';
   bikeEl.classList.remove('lean-left', 'lean-right');
   document.documentElement.style.setProperty('--zone-accent', '#00e5ff');
   updateLivesDisplay();
   updateComboBar();
+  updateNitroBar();
 
   startScreen.classList.add('hidden');
   gameOverScreen.classList.add('hidden');
@@ -914,6 +1064,7 @@ function restartGame() {
   clearTimeout(shieldTimer);
   clearTimeout(magnetTimer);
   clearTimeout(invulnTimer);
+  clearTimeout(driftTimer);
   startGame();
 }
 
@@ -923,8 +1074,10 @@ function triggerGameOver() {
   clearTimeout(shieldTimer);
   clearTimeout(magnetTimer);
   clearTimeout(invulnTimer);
+  clearTimeout(driftTimer);
 
   speedLines.classList.remove('active');
+  nitroLines.classList.remove('active');
   spawnCrashParticles(LANES[currentLane] + BIKE_W / 2, GAME_H - 22 - BIKE_H / 2, null);
   flashDamage('rgba(255,0,0,0.5)');
 
@@ -937,6 +1090,7 @@ function triggerGameOver() {
   goBestEl.textContent     = bestScore;
   goComboEl.textContent    = bestCombo + 'x';
   goCoinsEl.textContent    = sessionCoins;
+  goDriftEl.textContent    = driftCount;
   goZoneEl.textContent     = zone;
 
   if (isNewBest) newBestMsg.classList.remove('hidden');
@@ -956,6 +1110,13 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'ArrowLeft'  || e.key === 'a' || e.key === 'A') { moveLane(-1); e.preventDefault(); }
   if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { moveLane(1);  e.preventDefault(); }
+  if (e.key === ' ' && !nitroKeyHeld) { activateNitro(); e.preventDefault(); }
+  if ((e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') && e.shiftKey) { moveLane(-2); e.preventDefault(); }
+  if ((e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') && e.shiftKey) { moveLane(2); e.preventDefault(); }
+});
+
+document.addEventListener('keyup', e => {
+  if (e.key === ' ') { nitroKeyHeld = false; }
 });
 
 let touchStartX = 0, touchStartY = 0;
@@ -968,14 +1129,16 @@ document.addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - touchStartX;
   const dy = e.changedTouches[0].clientY - touchStartY;
   if (Math.abs(dx) < 28 || Math.abs(dy) > Math.abs(dx)) return;
-  moveLane(dx < 0 ? -1 : 1);
+  const laneMove = Math.abs(dx) > 120 ? (dx < 0 ? -2 : 2) : (dx < 0 ? -1 : 1);
+  moveLane(laneMove);
 }, { passive: true });
 
-bikeEl.style.left       = LANES[1] + 'px';
+bikeEl.style.left       = LANES[2] + 'px';
 bestEl.textContent      = bestScore;
 startBestVal.textContent = bestScore;
 updateLivesDisplay();
 updateComboBar();
+updateNitroBar();
 initRain();
 initRoadCanvas();
 initBgCanvas();

@@ -36,7 +36,7 @@
         </div>
         <div class="logo-badge">
           <span class="badge-dot"></span>
-          v4.0
+          v5.0
         </div>
       </div>
     </header>
@@ -77,6 +77,15 @@
         <div class="hud-corner tl"></div>
         <div class="hud-corner br"></div>
       </div>
+      <div class="hud-block hud-nitro">
+        <span class="hud-label">NITRO</span>
+        <div class="nitro-bar-mini">
+          <div class="nitro-fill-mini" id="nitroMini"></div>
+        </div>
+        <div class="hud-line"></div>
+        <div class="hud-corner tl"></div>
+        <div class="hud-corner br"></div>
+      </div>
     </div>
 
     <div class="bars-row">
@@ -93,6 +102,13 @@
         <div class="bar-track fever-track">
           <div class="bar-fill fever-fill" id="feverFill"></div>
         </div>
+      </div>
+      <div class="nitro-wrap" id="nitroWrap">
+        <span class="bar-tag nitro-tag">⚡NITRO</span>
+        <div class="bar-track nitro-track">
+          <div class="bar-fill nitro-fill" id="nitroFill"></div>
+        </div>
+        <span class="nitro-label" id="nitroLabel">READY</span>
       </div>
       <div class="coin-pill">
         <span>🪙</span>
@@ -112,7 +128,7 @@
         <div class="game-corner-piece br"></div>
 
         <div id="game">
-          <canvas id="roadCanvas" width="300" height="510"></canvas>
+          <canvas id="roadCanvas" width="420" height="540"></canvas>
           <div id="markerLayer"></div>
           <div id="obstaclesLayer"></div>
           <div id="powerupLayer"></div>
@@ -179,6 +195,9 @@
                 <div class="feat-item"><span class="feat-icon">🔥</span><span>Fever</span></div>
                 <div class="feat-item"><span class="feat-icon">🪙</span><span>Coins</span></div>
                 <div class="feat-item"><span class="feat-icon">🌊</span><span>6 Zones</span></div>
+                <div class="feat-item"><span class="feat-icon">🛣️</span><span>6 Lanes</span></div>
+                <div class="feat-item"><span class="feat-icon">💨</span><span>Nitro</span></div>
+                <div class="feat-item"><span class="feat-icon">🌀</span><span>Drift</span></div>
               </div>
 
               <div class="hs-box">
@@ -202,6 +221,10 @@
                   <span class="hint-swipe">SWIPE</span>
                   <span class="or-text">or</span>
                   <span class="hint-tap">TAP BUTTONS</span>
+                </div>
+                <div class="key-row" style="margin-top:6px">
+                  <kbd>SPACE</kbd>
+                  <span class="or-text">NITRO BOOST</span>
                 </div>
               </div>
             </div>
@@ -235,6 +258,11 @@
                 </div>
                 <div class="go-div"></div>
                 <div class="go-stat">
+                  <span class="go-label">DRIFT</span>
+                  <strong id="goDrift" class="go-val purple">0</strong>
+                </div>
+                <div class="go-div"></div>
+                <div class="go-stat">
                   <span class="go-label">BEST</span>
                   <strong id="goBest" class="go-val gold">0</strong>
                 </div>
@@ -262,8 +290,12 @@
             </div>
           </div>
 
+          <div class="nitro-announce hidden" id="nitroAnnounce">💨 NITRO!</div>
+          <div class="drift-announce hidden" id="driftAnnounce">🌀 DRIFT!</div>
+
           <div class="damage-flash" id="damageFlash"></div>
           <div class="speed-lines" id="speedLines"></div>
+          <div class="nitro-lines" id="nitroLines"></div>
 
         </div>
       </div>
@@ -271,15 +303,26 @@
       <div class="mobile-controls">
         <button class="tap-btn tap-left" id="tapLeft" ontouchstart="tapLane(-1)" onmousedown="tapLane(-1)">
           <div class="tap-glow"></div>
+          <span>◀◀</span>
+        </button>
+        <button class="tap-btn tap-left-one" id="tapLeftOne" ontouchstart="tapLane(-1)" onmousedown="tapLane(-1)">
+          <div class="tap-glow"></div>
           <span>◀</span>
         </button>
         <div class="mid-display">
-          <div class="mid-icon">🏍</div>
-          <div class="mid-pulse"></div>
+          <button class="nitro-btn" id="nitroBtn" ontouchstart="activateNitro()" onmousedown="activateNitro()">
+            <div class="nitro-btn-glow"></div>
+            <span>💨</span>
+            <span class="nitro-btn-label">NITRO</span>
+          </button>
         </div>
-        <button class="tap-btn tap-right" id="tapRight" ontouchstart="tapLane(1)" onmousedown="tapLane(1)">
+        <button class="tap-btn tap-right-one" id="tapRightOne" ontouchstart="tapLane(1)" onmousedown="tapLane(1)">
           <div class="tap-glow"></div>
           <span>▶</span>
+        </button>
+        <button class="tap-btn tap-right" id="tapRight" ontouchstart="tapLane(1)" onmousedown="tapLane(1)">
+          <div class="tap-glow"></div>
+          <span>▶▶</span>
         </button>
       </div>
 
@@ -292,7 +335,9 @@
       <span class="sep">·</span>
       <span>🛡️⚡💜🧲💣 POWER-UPS</span>
       <span class="sep">·</span>
-      <span>EVERY 5 DODGES = SPEED UP</span>
+      <span>HOLD SPACE = NITRO</span>
+      <span class="sep">·</span>
+      <span>6 LANES · 6 ZONES</span>
     </footer>
 
   </div>
