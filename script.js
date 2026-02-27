@@ -2012,11 +2012,45 @@ document.addEventListener('touchend', e => {
   moveLane(laneMove);
 }, { passive: true });
 
+function getCurrentTheme() {
+  const settings = Storage.getSettings();
+  return settings.theme || 'dark';
+}
+
+function setTheme(theme) {
+  Storage.saveSetting('theme', theme);
+  const body = document.body;
+  const themeToggle = document.getElementById('themeToggle');
+  if (theme === 'light') {
+    body.classList.add('light-theme');
+    if (themeToggle) themeToggle.querySelector('.theme-icon').textContent = '🌙';
+  } else {
+    body.classList.remove('light-theme');
+    if (themeToggle) themeToggle.querySelector('.theme-icon').textContent = '☀️';
+  }
+}
+
+function toggleTheme() {
+  const current = getCurrentTheme();
+  const newTheme = current === 'dark' ? 'light' : 'dark';
+  setTheme(newTheme);
+}
+
+// Initialize theme on load
+const initialTheme = getCurrentTheme();
+setTheme(initialTheme);
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+// Initialize bike position
 bikeEl.style.left = LANES[2] + 'px';
+
+// Load initial UI
 loadStartScreenStats();
 updateLivesDisplay();
 updateComboBar();
 updateNitroBar();
+
+// Initialize visual components
 initRain();
 initRoadCanvas();
 initBgCanvas();
