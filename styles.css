@@ -11,6 +11,7 @@
   --c-purple:     #bf5fff;
   --c-green:      #39ff14;
   --c-pink:       #ff3399;
+  --c-ghost:      #aaaaff;
   --c-dark:       #020308;
   --c-dark2:      #07090f;
   --c-dark3:      #0e1120;
@@ -25,6 +26,7 @@
   --glow-yellow:  0 0 14px rgba(255,215,0,0.95), 0 0 35px rgba(255,215,0,0.4);
   --glow-purple:  0 0 14px rgba(191,95,255,0.95), 0 0 36px rgba(191,95,255,0.4);
   --glow-green:   0 0 14px rgba(57,255,20,0.95),  0 0 36px rgba(57,255,20,0.4);
+  --glow-ghost:   0 0 14px rgba(170,170,255,0.95), 0 0 36px rgba(170,170,255,0.4);
 
   --zone-accent:  #00e5ff;
   --zone-accent2: #0077aa;
@@ -472,8 +474,16 @@ body {
   filter: saturate(1.7) brightness(1.14);
 }
 
+#game.ghost-mode {
+  filter: saturate(0.3) brightness(0.85) hue-rotate(180deg);
+}
+
 #roadCanvas {
   position: absolute; inset: 0; z-index: 0;
+}
+
+#effectCanvas {
+  position: absolute; inset: 0; z-index: 13; pointer-events: none;
 }
 
 #markerLayer       { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
@@ -551,6 +561,20 @@ body {
 .bike.lean-left  { transform: rotate(-12deg) translateX(-4px); }
 .bike.lean-right { transform: rotate(12deg) translateX(4px); }
 
+.bike.ghost-mode-bike {
+  opacity: 0.5;
+  filter:
+    drop-shadow(0 0 14px rgba(170,170,255,1))
+    drop-shadow(0 4px 28px rgba(170,170,255,0.7))
+    hue-rotate(180deg);
+  animation: ghostFlicker 0.18s ease-in-out infinite alternate;
+}
+
+@keyframes ghostFlicker {
+  from { opacity: 0.4; }
+  to   { opacity: 0.7; }
+}
+
 .shield-bubble {
   position: absolute; width: 64px; height: 96px;
   border-radius: 50%; z-index: 11; bottom: 16px;
@@ -596,6 +620,14 @@ body {
   50%      { opacity: 1; transform: scale(1.06) rotate(5deg); }
 }
 
+.ghost-trail {
+  position: absolute; bottom: 16px;
+  width: 40px; height: 72px;
+  pointer-events: none; z-index: 9;
+  transition: left 0.11s var(--ease-snap);
+  opacity: 0.3;
+}
+
 .trail-dot {
   position: absolute; border-radius: 50%;
   transform: translate(-50%, 0);
@@ -609,6 +641,20 @@ body {
 
 .obstacle { width: 40px; height: 68px; position: absolute; }
 .obstacle svg { width: 100%; height: 100%; }
+
+.obstacle.burning::after {
+  content: '🔥';
+  position: absolute;
+  top: -18px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  animation: burnFlicker 0.2s ease-in-out infinite alternate;
+}
+
+@keyframes burnFlicker {
+  from { transform: translateX(-50%) scale(0.9) rotate(-5deg); }
+  to   { transform: translateX(-50%) scale(1.1) rotate(5deg); }
+}
 
 .powerup {
   width: 34px; height: 34px; position: absolute;
@@ -637,6 +683,8 @@ body {
 .powerup.nuke::after   { border-color: rgba(255,69,0,0.4); }
 .powerup.nitropack { border-color: rgba(0,229,255,0.85);   box-shadow: 0 0 20px rgba(0,229,255,0.6); }
 .powerup.nitropack::after { border-color: rgba(0,229,255,0.4); animation-duration: 0.6s; }
+.powerup.ghost     { border-color: rgba(170,170,255,0.85); box-shadow: 0 0 20px rgba(170,170,255,0.6); }
+.powerup.ghost::after { border-color: rgba(170,170,255,0.4); animation-duration: 0.8s; }
 
 @keyframes powerFloat {
   from { transform: translateY(0) scale(1) rotate(0deg); }
@@ -695,6 +743,11 @@ body {
   color: var(--zone-accent); text-shadow: 0 0 30px var(--zone-accent);
 }
 
+.zone-sub {
+  font-family: var(--ff-mono); font-size: 9px; letter-spacing: 4px;
+  color: rgba(255,255,255,0.4);
+}
+
 .zone-announce.zone-pop {
   animation: zoneReveal 2.4s ease-out forwards;
 }
@@ -707,7 +760,7 @@ body {
   100% { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
 }
 
-.nitro-announce, .drift-announce {
+.nitro-announce, .drift-announce, .ghost-announce, .multiplier-announce {
   position: absolute; top: 30%; left: 50%;
   transform: translate(-50%, -50%);
   font-family: var(--ff-display); font-size: 28px;
@@ -724,7 +777,21 @@ body {
   top: 40%;
 }
 
-.nitro-announce.nitro-pop, .drift-announce.drift-pop {
+.ghost-announce {
+  color: var(--c-ghost); text-shadow: var(--glow-ghost);
+  top: 25%;
+  font-size: 22px;
+}
+
+.multiplier-announce {
+  color: var(--c-yellow); text-shadow: var(--glow-yellow);
+  top: 38%; font-size: 32px;
+}
+
+.nitro-announce.nitro-pop,
+.drift-announce.drift-pop,
+.ghost-announce.ghost-pop,
+.multiplier-announce.mult-pop {
   animation: announceFlash 0.85s ease-out forwards;
 }
 
@@ -801,6 +868,32 @@ body {
 @keyframes nitroScroll {
   from { background-position-y: 0; }
   to   { background-position-y: 4px; }
+}
+
+.pause-btn {
+  position: absolute; top: 8px; right: 8px;
+  width: 28px; height: 28px; z-index: 18;
+  font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  color: rgba(255,255,255,0.3);
+  transition: all 0.15s;
+}
+.pause-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+
+.score-multiplier {
+  position: absolute; top: 8px; left: 8px;
+  font-family: var(--ff-display); font-size: 22px;
+  z-index: 18; pointer-events: none;
+  color: var(--c-yellow); text-shadow: var(--glow-yellow);
+  animation: multBounce 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes multBounce {
+  from { transform: scale(1); }
+  to   { transform: scale(1.1); }
 }
 
 .screen {
@@ -962,6 +1055,34 @@ body {
   border-color: #66eeff;
   box-shadow: 0 0 45px rgba(0,229,255,1), 0 0 90px rgba(0,229,255,0.45);
 }
+
+.btn-resume {
+  border-color: var(--c-green); color: var(--c-green);
+  text-shadow: var(--glow-green); box-shadow: var(--glow-green);
+  font-size: 18px; padding: 10px 32px;
+}
+.btn-resume .btn-bg { background: linear-gradient(135deg, transparent 40%, rgba(57,255,20,0.05) 100%); }
+.btn-resume:hover {
+  box-shadow: 0 0 45px rgba(57,255,20,1), 0 0 90px rgba(57,255,20,0.45);
+}
+
+.pause-inner {
+  gap: 16px;
+}
+
+.pause-title {
+  font-family: var(--ff-display); font-size: 54px;
+  letter-spacing: 4px; color: var(--c-green);
+  text-shadow: var(--glow-green); line-height: 1;
+}
+
+.pause-hint {
+  font-family: var(--ff-mono); font-size: 9px;
+  letter-spacing: 2px; color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+}
+
+.retry-row { display: flex; gap: 10px; }
 
 .controls-hint { margin-top: -2px; }
 
@@ -1202,6 +1323,7 @@ kbd:active {
   .wrapper   { gap: 4px; padding: 5px 12px; }
   #game      { height: 460px; }
   #roadCanvas { height: 460px; }
+  #effectCanvas { height: 460px; }
   .bars-row  { display: none; }
   .site-footer { display: none; }
 }
@@ -1210,6 +1332,7 @@ kbd:active {
   .hud { width: 100vw; max-width: 420px; }
   #game { width: 100vw; max-width: 420px; }
   #roadCanvas { width: 100%; }
+  #effectCanvas { width: 100%; }
   .mobile-controls { width: 100vw; max-width: 420px; }
   .bars-row { width: 100vw; max-width: 420px; }
   .site-footer { max-width: 100vw; }

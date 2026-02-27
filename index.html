@@ -36,7 +36,7 @@
         </div>
         <div class="logo-badge">
           <span class="badge-dot"></span>
-          v5.0
+          v6.0
         </div>
       </div>
     </header>
@@ -137,6 +137,7 @@
           <div id="floatingTextLayer"></div>
           <div id="trailLayer"></div>
           <div id="lightBeamLayer"></div>
+          <canvas id="effectCanvas" width="420" height="540"></canvas>
 
           <div class="bike" id="bike">
             <div class="bike-exhaust" id="bikeExhaust"></div>
@@ -172,6 +173,7 @@
             <div class="magnet-ring r2"></div>
             <div class="magnet-ring r3"></div>
           </div>
+          <div class="ghost-trail hidden" id="ghostTrail"></div>
 
           <div class="screen" id="startScreen">
             <div class="screen-inner">
@@ -194,10 +196,10 @@
                 <div class="feat-item"><span class="feat-icon">🛡️</span><span>Shield</span></div>
                 <div class="feat-item"><span class="feat-icon">🔥</span><span>Fever</span></div>
                 <div class="feat-item"><span class="feat-icon">🪙</span><span>Coins</span></div>
-                <div class="feat-item"><span class="feat-icon">🌊</span><span>6 Zones</span></div>
+                <div class="feat-item"><span class="feat-icon">🌊</span><span>8 Zones</span></div>
                 <div class="feat-item"><span class="feat-icon">🛣️</span><span>6 Lanes</span></div>
                 <div class="feat-item"><span class="feat-icon">💨</span><span>Nitro</span></div>
-                <div class="feat-item"><span class="feat-icon">🌀</span><span>Drift</span></div>
+                <div class="feat-item"><span class="feat-icon">👻</span><span>Ghost</span></div>
               </div>
 
               <div class="hs-box">
@@ -225,6 +227,8 @@
                 <div class="key-row" style="margin-top:6px">
                   <kbd>SPACE</kbd>
                   <span class="or-text">NITRO BOOST</span>
+                  <kbd>SHIFT+◀▶</kbd>
+                  <span class="or-text">DOUBLE DRIFT</span>
                 </div>
               </div>
             </div>
@@ -274,10 +278,25 @@
 
               <p class="new-best hidden" id="newBestMsg">🏆 NEW RECORD!</p>
 
-              <button class="btn-start btn-retry" onclick="restartGame()">
+              <div class="retry-row">
+                <button class="btn-start btn-retry" onclick="restartGame()">
+                  <div class="btn-bg"></div>
+                  <span class="btn-text">TRY AGAIN</span>
+                  <span class="btn-arrow">↺</span>
+                  <div class="btn-shine"></div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen hidden" id="pauseScreen">
+            <div class="screen-inner pause-inner">
+              <p class="screen-title pause-title">PAUSED</p>
+              <div class="pause-hint">Press <kbd>P</kbd> or tap to resume</div>
+              <button class="btn-start btn-resume" onclick="resumeGame()">
                 <div class="btn-bg"></div>
-                <span class="btn-text">TRY AGAIN</span>
-                <span class="btn-arrow">↺</span>
+                <span class="btn-text">RESUME</span>
+                <span class="btn-arrow">▶</span>
                 <div class="btn-shine"></div>
               </button>
             </div>
@@ -287,21 +306,27 @@
             <div class="zone-announce-inner">
               <div class="zone-number" id="zoneNumber"></div>
               <div class="zone-name" id="zoneName"></div>
+              <div class="zone-sub" id="zoneSub"></div>
             </div>
           </div>
 
           <div class="nitro-announce hidden" id="nitroAnnounce">💨 NITRO!</div>
           <div class="drift-announce hidden" id="driftAnnounce">🌀 DRIFT!</div>
+          <div class="ghost-announce hidden" id="ghostAnnounce">👻 GHOST MODE!</div>
+          <div class="multiplier-announce hidden" id="multiplierAnnounce"></div>
 
           <div class="damage-flash" id="damageFlash"></div>
           <div class="speed-lines" id="speedLines"></div>
           <div class="nitro-lines" id="nitroLines"></div>
 
+          <div class="pause-btn" id="pauseBtn" onclick="togglePause()">⏸</div>
+          <div class="score-multiplier hidden" id="scoreMultiplier">x1</div>
+
         </div>
       </div>
 
       <div class="mobile-controls">
-        <button class="tap-btn tap-left" id="tapLeft" ontouchstart="tapLane(-1)" onmousedown="tapLane(-1)">
+        <button class="tap-btn tap-left" id="tapLeft" ontouchstart="tapLane(-2)" onmousedown="tapLane(-2)">
           <div class="tap-glow"></div>
           <span>◀◀</span>
         </button>
@@ -320,7 +345,7 @@
           <div class="tap-glow"></div>
           <span>▶</span>
         </button>
-        <button class="tap-btn tap-right" id="tapRight" ontouchstart="tapLane(1)" onmousedown="tapLane(1)">
+        <button class="tap-btn tap-right" id="tapRight" ontouchstart="tapLane(2)" onmousedown="tapLane(2)">
           <div class="tap-glow"></div>
           <span>▶▶</span>
         </button>
@@ -333,11 +358,13 @@
       <span class="sep">·</span>
       <span>COMBO x5 = +2 BONUS</span>
       <span class="sep">·</span>
-      <span>🛡️⚡💜🧲💣 POWER-UPS</span>
+      <span>🛡️⚡💜🧲💣👻 POWER-UPS</span>
       <span class="sep">·</span>
       <span>HOLD SPACE = NITRO</span>
       <span class="sep">·</span>
-      <span>6 LANES · 6 ZONES</span>
+      <span>P = PAUSE</span>
+      <span class="sep">·</span>
+      <span>6 LANES · 8 ZONES</span>
     </footer>
 
   </div>
